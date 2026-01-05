@@ -1,0 +1,21 @@
+# Custom plugins directory
+# Place your custom plugins here. They will be automatically discovered.
+#
+# Example plugin:
+#
+# from aiogram import Router
+# from aiogram.filters import Command
+# from aiogram.types import Message
+# from src.plugins.base import BasePlugin
+#
+# class MyPlugin(BasePlugin):
+#     name = "my_plugin"
+#     description = "My custom plugin"
+#     version = "1.0.0"
+#
+#     def setup_handlers(self, router: Router) -> None:
+#         @router.message(Command("mycommand"))
+#         async def handle_mycommand(message: Message):
+#             await message.answer("Hello from my plugin!")
+#
+# plugin = MyPlugin

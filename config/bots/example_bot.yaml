@@ -1,0 +1,71 @@
+# Example Bot Configuration
+# Copy this file and modify for your own bots
+
+id: "example_bot"
+name: "Example Bot"
+description: "An example bot showing available configuration options"
+enabled: false  # Set to true when you configure the token
+
+# Bot token - reference environment variable
+token: "${EXAMPLE_BOT_TOKEN}"
+
+# Operating mode: "polling" or "webhook"
+mode: "polling"
+
+# Webhook configuration (only used when mode is "webhook")
+webhook:
+  path: "/example"  # Full path: {WEBHOOK_BASE_URL}/webhook/example
+  max_connections: 40
+
+# Bot-specific settings passed to aiogram
+settings:
+  parse_mode: "HTML"
+  disable_web_page_preview: false
+
+# Plugins to enable (order matters - processed top to bottom)
+plugins:
+  - name: "start"
+    enabled: true
+    config:
+      welcome_message: |
+        Welcome to the Example Bot!
+
+        Use /help to see available commands.
+
+  - name: "help"
+    enabled: true
+    config:
+      header: "Available Commands"
+      commands:
+        - command: "/start"
+          description: "Start the bot"
+        - command: "/help"
+          description: "Show this help message"
+
+  - name: "error_handler"
+    enabled: true
+    config:
+      notify_admins: true
+      show_error_id: true
+
+# Access control
+access:
+  # Empty list = allow all users
+  allowed_users: []
+
+  # Users who are blocked from using the bot
+  blocked_users: []
+
+  # Users with admin privileges for this bot
+  admin_users:
+    - 123456789  # Replace with actual admin user IDs
+
+# Rate limiting overrides (optional)
+rate_limiting:
+  enabled: true
+  default_rate: 30  # requests per minute
+  burst_size: 10
+
+# FSM (Finite State Machine) strategy
+# Options: GLOBAL_USER, USER_IN_CHAT, CHAT
+fsm_strategy: "USER_IN_CHAT"

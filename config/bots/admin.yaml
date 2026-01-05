@@ -1,0 +1,30 @@
+# Admin Bot Configuration
+# This bot controls and monitors other bots in the system
+
+id: "admin"
+name: "Admin Control Bot"
+description: "Controls and monitors other bots"
+enabled: true
+
+# Token from environment variable
+token: "${ADMIN_BOT_TOKEN}"
+
+# Admin bot always uses polling for simplicity
+mode: "polling"
+
+settings:
+  parse_mode: "HTML"
+  disable_web_page_preview: true
+
+# Admin bot uses built-in admin plugin
+plugins:
+  - name: "admin_core"
+    config:
+      require_confirmation: true
+      max_log_lines: 100
+
+# Access control - only admin users can interact
+access:
+  admin_users: []  # Loaded from ADMIN_ALLOWED_USERS env var
+  allowed_users: []  # Empty means check admin_users only
+  blocked_users: []

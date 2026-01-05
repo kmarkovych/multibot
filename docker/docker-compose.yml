@@ -1,0 +1,108 @@
+services:
+  multibot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: multibot
+    restart: unless-stopped
+    ports:
+      - "8080:8080"   # Health checks
+      - "8443:8443"   # Webhooks (optional)
+    environment:
+      # Database
+      DATABASE_URL: postgresql://multibot:${DB_PASSWORD:-multibot}@postgres:5432/multibot
+      DATABASE_POOL_SIZE: 10
+
+      # Admin bot
+      ADMIN_BOT_TOKEN: ${ADMIN_BOT_TOKEN}
+      ADMIN_ALLOWED_USERS: ${ADMIN_ALLOWED_USERS}
+
+      # Other bot tokens (add as needed)
+      # BOT_SUPPORT_TOKEN: ${BOT_SUPPORT_TOKEN}
+      # BOT_NOTIFICATION_TOKEN: ${BOT_NOTIFICATION_TOKEN}
+
+      # Health checks
+      HEALTH_CHECK_ENABLED: "true"
+      HEALTH_CHECK_HOST: 0.0.0.0
+      HEALTH_CHECK_PORT: 8080
+
+      # Webhook (if using)
+      WEBHOOK_ENABLED: ${WEBHOOK_ENABLED:-false}
+      WEBHOOK_BASE_URL: ${WEBHOOK_BASE_URL:-}
+      WEBHOOK_HOST: 0.0.0.0
+      WEBHOOK_PORT: 8443
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: json
+
+      # Hot reload
+      ENABLE_HOT_RELOAD: "true"
+      CONFIG_DIR: /app/config/bots
+      PLUGINS_DIR: /app/src/plugins/custom
+    volumes:
+      # Bot configurations (hot-reloadable)
+      - ../config/bots:/app/config/bots:ro
+
+      # Custom plugins (hot-reloadable)
+      - ../src/plugins/custom:/app/src/plugins/custom:ro
+
+      # Logs (optional)
+      - multibot_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - multibot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health/live')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: multibot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: multibot
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-multibot}
+      POSTGRES_DB: multibot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  # Remove in production
+    networks:
+      - multibot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U multibot -d multibot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Redis for FSM storage (better than memory for production)
+  redis:
+    image: redis:7-alpine
+    container_name: multibot-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - multibot-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  multibot-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  multibot_logs:

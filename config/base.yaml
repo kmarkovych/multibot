@@ -1,0 +1,54 @@
+# Base configuration shared across all bots
+# This file is for documentation - actual settings come from environment variables
+
+app:
+  name: "Telegram Multibot System"
+  version: "1.0.0"
+  environment: "production"  # development, staging, production
+
+database:
+  # Set via DATABASE_URL environment variable
+  pool_size: 10
+  pool_max_overflow: 20
+  pool_recycle: 3600
+  pool_timeout: 30
+
+logging:
+  # Set via LOG_LEVEL and LOG_FORMAT environment variables
+  level: INFO
+  format: "json"  # json or text
+  include_request_id: true
+
+health:
+  # Set via HEALTH_CHECK_* environment variables
+  enabled: true
+  port: 8080
+  host: "0.0.0.0"
+  liveness_path: "/health/live"
+  readiness_path: "/health/ready"
+
+webhook:
+  # Set via WEBHOOK_* environment variables
+  enabled: false
+  base_url: ""
+  port: 8443
+  secret: ""
+  path_prefix: "/webhook"
+
+hot_reload:
+  # Set via ENABLE_HOT_RELOAD environment variable
+  enabled: true
+  watch_interval: 5  # seconds
+  debounce_ms: 1600
+
+rate_limiting:
+  enabled: true
+  default_rate: 30  # requests per minute
+  burst_size: 10
+
+# Default middleware applied to all bots
+middleware:
+  - logging
+  - error_handling
+  - rate_limit
+  - database

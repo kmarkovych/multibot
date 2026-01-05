@@ -1,0 +1,30 @@
+# Telegram Bot Framework
+aiogram>=3.3.0
+
+# Database
+asyncpg>=0.29.0
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.13.0
+
+# Configuration
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+pyyaml>=6.0.0
+python-dotenv>=1.0.0
+
+# HTTP Server (health checks, webhooks)
+aiohttp>=3.9.0
+
+# Hot Reload
+watchfiles>=0.21.0
+
+# Logging
+structlog>=24.1.0
+
+# Markdown to PDF conversion
+markdown>=3.5.0
+weasyprint>=60.0
+# Alternative PDF libraries (fallbacks)
+# pdfkit>=1.0.0  # Requires wkhtmltopdf system package
+# xhtml2pdf>=0.2.11  # Pure Python fallback
+reportlab>=4.0.0  # Fallback PDF generation
