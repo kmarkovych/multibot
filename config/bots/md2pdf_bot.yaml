@@ -1,0 +1,52 @@
+# Markdown to PDF Converter Bot Configuration
+
+id: "md2pdf_bot"
+name: "Markdown to PDF Converter"
+description: "Convert Markdown text and files to beautifully formatted PDF documents"
+enabled: true
+
+# Bot token from environment variable
+token: "${BOT_MD2PDF_TOKEN}"
+
+# Operating mode
+mode: "polling"
+
+# Bot settings
+settings:
+  parse_mode: "HTML"
+  disable_web_page_preview: true
+
+# Plugins
+plugins:
+  - name: "md2pdf"
+    enabled: true
+    config:
+      # Custom welcome message (optional)
+      # welcome_message: "Custom welcome text here"
+
+      # Default theme: "light" or "dark"
+      default_theme: "light"
+
+      # Maximum file size in bytes (default 1MB)
+      max_file_size: 1048576
+
+  - name: "error_handler"
+    enabled: true
+    config:
+      show_error_id: true
+      notify_admins: false
+
+# Access control
+access:
+  allowed_users: []    # Empty = allow all users
+  blocked_users: []
+  admin_users: []      # Add your user ID for admin commands
+
+# Rate limiting
+rate_limiting:
+  enabled: true
+  default_rate: 20     # 20 conversions per minute
+  burst_size: 5
+
+# FSM strategy
+fsm_strategy: "USER_IN_CHAT"
