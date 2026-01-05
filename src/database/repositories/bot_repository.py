@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import BotEvent, BotRecord, BotUser, PluginState
 from src.database.repositories.base import BaseRepository

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING, Any
 
 from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, Message, Update
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 class DatabaseMiddleware(BaseMiddleware):
     """Middleware that injects database session into handler data."""
 
-    def __init__(self, db: "DatabaseManager"):
+    def __init__(self, db: DatabaseManager):
         self.db = db
 
     async def __call__(

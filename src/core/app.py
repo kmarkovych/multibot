@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -45,11 +44,11 @@ class MultibotApplication:
         self.dispatcher_factory: DispatcherFactory | None = None
 
         # Servers
-        self.health_server: "HealthServer | None" = None
-        self.webhook_server: "WebhookServer | None" = None
+        self.health_server: HealthServer | None = None
+        self.webhook_server: WebhookServer | None = None
 
         # Hot reload
-        self.config_watcher: "ConfigWatcher | None" = None
+        self.config_watcher: ConfigWatcher | None = None
 
         # Signal handling
         self.signal_handler = SignalHandler()

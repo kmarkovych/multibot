@@ -59,7 +59,7 @@ class PluginRegistry:
         name: str,
         config: dict[str, Any] | None = None,
         bot_id: str | None = None,
-        db: "DatabaseManager | None" = None,
+        db: DatabaseManager | None = None,
     ) -> BasePlugin:
         """Create a plugin instance with the given configuration."""
         plugin_class = self.get_plugin_class(name)
@@ -127,9 +127,9 @@ class PluginRegistry:
         if self._builtin_loaded:
             return
 
-        from src.plugins.builtin.start import StartPlugin
-        from src.plugins.builtin.help import HelpPlugin
         from src.plugins.builtin.error_handler import ErrorHandlerPlugin
+        from src.plugins.builtin.help import HelpPlugin
+        from src.plugins.builtin.start import StartPlugin
 
         self.register(StartPlugin)
         self.register(HelpPlugin)

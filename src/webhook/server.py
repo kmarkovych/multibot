@@ -7,8 +7,8 @@ import hmac
 import logging
 from typing import TYPE_CHECKING
 
-from aiohttp import web
 from aiogram.types import Update
+from aiohttp import web
 
 if TYPE_CHECKING:
     from src.core.bot_manager import BotManager
@@ -27,7 +27,7 @@ class WebhookServer:
         self,
         host: str = "0.0.0.0",
         port: int = 8443,
-        bot_manager: "BotManager | None" = None,
+        bot_manager: BotManager | None = None,
         base_url: str = "",
         secret: str = "",
         path_prefix: str = "/webhook",

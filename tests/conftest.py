@@ -1,10 +1,9 @@
 """Pytest configuration and fixtures."""
 
 import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 
 import pytest
-import pytest_asyncio
 
 from src.core.config import AppConfig, BotConfig
 from src.plugins.registry import PluginRegistry

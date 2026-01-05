@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock
 
-from src.plugins.custom.md2pdf import Md2PdfPlugin, ConvertStates
+import pytest
+
+from src.plugins.custom.md2pdf import ConvertStates, Md2PdfPlugin
 
 
 class TestMd2PdfPluginMetadata:

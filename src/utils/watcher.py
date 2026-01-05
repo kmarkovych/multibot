@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Awaitable, Callable, Set
 
 from watchfiles import Change, awatch
 
@@ -70,7 +70,7 @@ class ConfigWatcher:
         except Exception as e:
             logger.error(f"Error in watch loop: {e}")
 
-    async def _handle_changes(self, changes: Set[tuple[Change, str]]) -> None:
+    async def _handle_changes(self, changes: set[tuple[Change, str]]) -> None:
         """Process file changes."""
         for change_type, path_str in changes:
             path = Path(path_str)

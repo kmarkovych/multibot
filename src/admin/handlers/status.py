@@ -33,7 +33,7 @@ def format_timedelta(td) -> str:
 
 
 @router.message(Command("status"))
-async def cmd_status(message: Message, bot_manager: "BotManager") -> None:
+async def cmd_status(message: Message, bot_manager: BotManager) -> None:
     """
     Show status of all bots.
 
@@ -50,7 +50,7 @@ async def cmd_status(message: Message, bot_manager: "BotManager") -> None:
         await _show_all_status(message, bot_manager)
 
 
-async def _show_all_status(message: Message, bot_manager: "BotManager") -> None:
+async def _show_all_status(message: Message, bot_manager: BotManager) -> None:
     """Show status overview of all bots."""
     bots = bot_manager.get_all_bots()
 
@@ -93,7 +93,7 @@ async def _show_all_status(message: Message, bot_manager: "BotManager") -> None:
 
 async def _show_bot_details(
     message: Message,
-    bot_manager: "BotManager",
+    bot_manager: BotManager,
     bot_id: str,
 ) -> None:
     """Show detailed status for a specific bot."""
@@ -139,7 +139,7 @@ async def _show_bot_details(
 
 
 @router.message(Command("list"))
-async def cmd_list(message: Message, bot_manager: "BotManager") -> None:
+async def cmd_list(message: Message, bot_manager: BotManager) -> None:
     """
     List all configured bots.
 
@@ -161,7 +161,7 @@ async def cmd_list(message: Message, bot_manager: "BotManager") -> None:
 
 
 @router.message(Command("health"))
-async def cmd_health(message: Message, bot_manager: "BotManager") -> None:
+async def cmd_health(message: Message, bot_manager: BotManager) -> None:
     """
     Show system health status.
 

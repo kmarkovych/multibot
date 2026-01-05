@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from aiogram.types import Message, CallbackQuery, Document, User, Chat
+import pytest
 from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Chat, Document, Message, User
 
-from src.plugins.custom.md2pdf import Md2PdfPlugin, ConvertStates
+from src.plugins.custom.md2pdf import ConvertStates, Md2PdfPlugin
 
 
 def create_mock_user(user_id: int = 123456789, first_name: str = "Test") -> User:
@@ -105,19 +105,14 @@ class TestStartCommand:
     @pytest.mark.asyncio
     async def test_start_sends_welcome_message(self, plugin):
         """Test /start sends welcome message."""
-        message = create_mock_message(text="/start")
+        _message = create_mock_message(text="/start")  # noqa: F841
 
         # Get the start handler from router
         # Since we can't easily extract handlers, test the expected behavior
         # by checking the message content that should be sent
 
-        # The welcome message should contain these elements
-        expected_elements = [
-            "Markdown",
-            "PDF",
-            "convert",
-            "/help",
-        ]
+        # The welcome message should contain these elements (for reference)
+        _expected_elements = ["Markdown", "PDF", "convert", "/help"]  # noqa: F841
 
         # Verify plugin has expected welcome behavior
         welcome = plugin.get_config("welcome_message", None)
@@ -216,7 +211,7 @@ class TestCancelCallback:
     async def test_cancel_clears_state(self):
         """Test cancel callback clears FSM state."""
         state = create_mock_state()
-        callback = create_mock_callback(data="cancel_convert")
+        _callback = create_mock_callback(data="cancel_convert")  # noqa: F841
 
         # Simulate what the handler does
         await state.clear()

@@ -1,10 +1,6 @@
 """Tests for configuration module."""
 
-import os
-from pathlib import Path
-from tempfile import NamedTemporaryFile
 
-import pytest
 
 from src.core.config import (
     AppConfig,

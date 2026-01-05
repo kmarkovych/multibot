@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from aiogram import Router
 
-from src.admin.handlers.status import router as status_router
 from src.admin.handlers.bot_control import router as bot_control_router
+from src.admin.handlers.status import router as status_router
 from src.plugins.base import BasePlugin
 
 

@@ -20,7 +20,12 @@ ignore = [
     "E501",   # line too long (handled by formatter)
     "B008",   # do not perform function calls in argument defaults
     "B904",   # raise without from inside except
+    "B027",   # empty method in abstract base class (intentional for optional hooks)
     "ARG001", # unused function argument
+    "ARG002", # unused method argument (common in handler signatures)
+    "SIM105", # contextlib.suppress preference (less readable)
+    "SIM108", # ternary operator preference (less readable for complex cases)
+    "SIM117", # combine with statements (less readable)
 ]
 
 [lint.per-file-ignores]

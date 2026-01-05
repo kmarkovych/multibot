@@ -72,14 +72,14 @@ class BotManager:
     def __init__(
         self,
         db: DatabaseManager | None = None,
-        dispatcher_factory: "DispatcherFactory | None" = None,
+        dispatcher_factory: DispatcherFactory | None = None,
     ):
         self.bots: dict[str, ManagedBot] = {}
         self.db = db
         self.dispatcher_factory = dispatcher_factory
         self._shutdown_event = asyncio.Event()
 
-    def set_dispatcher_factory(self, factory: "DispatcherFactory") -> None:
+    def set_dispatcher_factory(self, factory: DispatcherFactory) -> None:
         """Set the dispatcher factory."""
         self.dispatcher_factory = factory
 

@@ -42,7 +42,7 @@ def _create_confirmation_keyboard(action: str, bot_id: str) -> InlineKeyboardMar
 
 
 @router.message(Command("start_bot"))
-async def cmd_start_bot(message: Message, bot_manager: "BotManager") -> None:
+async def cmd_start_bot(message: Message, bot_manager: BotManager) -> None:
     """
     Start a stopped bot.
 
@@ -76,7 +76,7 @@ async def cmd_start_bot(message: Message, bot_manager: "BotManager") -> None:
 
 
 @router.message(Command("stop_bot"))
-async def cmd_stop_bot(message: Message, bot_manager: "BotManager") -> None:
+async def cmd_stop_bot(message: Message, bot_manager: BotManager) -> None:
     """
     Stop a running bot.
 
@@ -110,7 +110,7 @@ async def cmd_stop_bot(message: Message, bot_manager: "BotManager") -> None:
 
 
 @router.message(Command("restart_bot"))
-async def cmd_restart_bot(message: Message, bot_manager: "BotManager") -> None:
+async def cmd_restart_bot(message: Message, bot_manager: BotManager) -> None:
     """
     Restart a bot.
 
@@ -142,8 +142,8 @@ async def cmd_restart_bot(message: Message, bot_manager: "BotManager") -> None:
 @router.message(Command("reload"))
 async def cmd_reload(
     message: Message,
-    bot_manager: "BotManager",
-    config_manager: "ConfigManager",
+    bot_manager: BotManager,
+    config_manager: ConfigManager,
 ) -> None:
     """
     Reload a bot's configuration.
@@ -185,8 +185,8 @@ async def cmd_reload(
 @router.message(Command("reload_all"))
 async def cmd_reload_all(
     message: Message,
-    bot_manager: "BotManager",
-    config_manager: "ConfigManager",
+    bot_manager: BotManager,
+    config_manager: ConfigManager,
 ) -> None:
     """
     Reload all bot configurations.
@@ -205,8 +205,8 @@ async def cmd_reload_all(
 @router.callback_query(lambda c: c.data and c.data.startswith("confirm_"))
 async def handle_confirmation(
     callback: CallbackQuery,
-    bot_manager: "BotManager",
-    config_manager: "ConfigManager",
+    bot_manager: BotManager,
+    config_manager: ConfigManager,
 ) -> None:
     """Handle confirmation callbacks."""
     if not callback.data or not callback.message:
@@ -239,7 +239,6 @@ async def handle_confirmation(
 
         elif action == "reload_all":
             await callback.message.edit_text("🔄 Reloading all configurations...")
-            from pathlib import Path
             bot_configs = config_manager.load_bot_configs()
 
             results = []

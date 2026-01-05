@@ -31,8 +31,8 @@ class DispatcherFactory:
 
     def __init__(
         self,
-        plugin_registry: "PluginRegistry",
-        db: "DatabaseManager | None" = None,
+        plugin_registry: PluginRegistry,
+        db: DatabaseManager | None = None,
     ):
         self.plugin_registry = plugin_registry
         self.db = db
@@ -129,8 +129,8 @@ class DispatcherFactory:
         bot_id: str,
     ) -> None:
         """Setup middleware for the dispatcher."""
-        from src.middleware.logging import LoggingMiddleware
         from src.middleware.database import DatabaseMiddleware
+        from src.middleware.logging import LoggingMiddleware
 
         # Add logging middleware
         dispatcher.message.middleware(LoggingMiddleware(bot_id=bot_id))

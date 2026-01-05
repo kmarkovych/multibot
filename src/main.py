@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -15,8 +14,8 @@ def main() -> int:
     load_dotenv()
 
     # Import after loading env to ensure env vars are available
-    from src.core.config import AppConfig
     from src.core.app import MultibotApplication
+    from src.core.config import AppConfig
     from src.utils.logging import setup_logging
 
     # Load configuration

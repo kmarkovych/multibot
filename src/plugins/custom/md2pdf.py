@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import tempfile
 from io import BytesIO
 from pathlib import Path
-from typing import Any
 
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandStart
@@ -16,7 +14,6 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (
     BufferedInputFile,
     CallbackQuery,
-    Document,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
@@ -414,10 +411,6 @@ print("Hello, World!")
         """Convert markdown to HTML with styling."""
         try:
             import markdown
-            from markdown.extensions.codehilite import CodeHiliteExtension
-            from markdown.extensions.tables import TableExtension
-            from markdown.extensions.fenced_code import FencedCodeExtension
-            from markdown.extensions.toc import TocExtension
         except ImportError:
             # Fallback to basic conversion
             import html
@@ -530,12 +523,13 @@ print("Hello, World!")
 
     async def _fallback_pdf_generation(self, html_content: str) -> bytes:
         """Fallback PDF generation using reportlab."""
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import cm
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-        from io import BytesIO
         import re
+        from io import BytesIO
+
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.units import cm
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
         output = BytesIO()
         doc = SimpleDocTemplate(

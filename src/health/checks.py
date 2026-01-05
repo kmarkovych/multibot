@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from src.database.connection import DatabaseManager
 
 
-async def check_database(db: "DatabaseManager | None") -> dict[str, Any]:
+async def check_database(db: DatabaseManager | None) -> dict[str, Any]:
     """Check database health."""
     if not db:
         return {"status": "unavailable", "message": "Database not configured"}
@@ -29,7 +29,7 @@ async def check_database(db: "DatabaseManager | None") -> dict[str, Any]:
         return {"status": "unhealthy", "message": str(e)}
 
 
-async def check_bots(bot_manager: "BotManager | None") -> dict[str, Any]:
+async def check_bots(bot_manager: BotManager | None) -> dict[str, Any]:
     """Check bots health."""
     if not bot_manager:
         return {"status": "unavailable", "message": "Bot manager not configured"}
@@ -51,8 +51,8 @@ async def check_bots(bot_manager: "BotManager | None") -> dict[str, Any]:
 
 
 async def get_health_status(
-    bot_manager: "BotManager | None" = None,
-    db: "DatabaseManager | None" = None,
+    bot_manager: BotManager | None = None,
+    db: DatabaseManager | None = None,
 ) -> dict[str, Any]:
     """Get comprehensive health status."""
     components = {}

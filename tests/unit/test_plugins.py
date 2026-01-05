@@ -2,9 +2,9 @@
 
 import pytest
 
+from src.core.exceptions import PluginNotFoundError
 from src.plugins.base import BasePlugin
 from src.plugins.registry import PluginRegistry
-from src.core.exceptions import PluginNotFoundError
 
 
 class DummyPlugin(BasePlugin):

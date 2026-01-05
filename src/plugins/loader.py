@@ -26,7 +26,7 @@ class PluginLoader:
     hot reloading of plugins without restarting the application.
     """
 
-    def __init__(self, registry: "PluginRegistry"):
+    def __init__(self, registry: PluginRegistry):
         self.registry = registry
         self._loaded_modules: dict[str, ModuleType] = {}
         self._module_paths: dict[str, Path] = {}
@@ -79,7 +79,7 @@ class PluginLoader:
         """Extract the plugin class from a loaded module."""
         # First, check for explicit 'plugin' attribute
         if hasattr(module, "plugin"):
-            plugin_attr = getattr(module, "plugin")
+            plugin_attr = module.plugin
             if isinstance(plugin_attr, type) and issubclass(plugin_attr, BasePlugin):
                 return plugin_attr
 

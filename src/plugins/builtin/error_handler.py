@@ -5,7 +5,7 @@ import traceback
 import uuid
 from typing import Any
 
-from aiogram import Bot, Router
+from aiogram import Router
 from aiogram.types import ErrorEvent
 
 from src.plugins.base import BasePlugin

@@ -1,6 +1,5 @@
 """Help command plugin."""
 
-from typing import Any
 
 from aiogram import Router
 from aiogram.filters import Command

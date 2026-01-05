@@ -31,8 +31,8 @@ class HealthServer:
         self,
         host: str = "0.0.0.0",
         port: int = 8080,
-        bot_manager: "BotManager | None" = None,
-        db: "DatabaseManager | None" = None,
+        bot_manager: BotManager | None = None,
+        db: DatabaseManager | None = None,
     ):
         self.host = host
         self.port = port

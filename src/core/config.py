@@ -239,7 +239,7 @@ class ConfigManager:
         self._bot_configs: dict[str, BotConfig] = {}
 
     @classmethod
-    def load_from_env(cls) -> "ConfigManager":
+    def load_from_env(cls) -> ConfigManager:
         """Load application configuration from environment."""
         app_config = AppConfig()
         return cls(app_config)

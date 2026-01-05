@@ -1,7 +1,7 @@
 """Database layer for the multibot system."""
 
 from src.database.connection import DatabaseManager
-from src.database.models import Base, BotRecord, BotUser, BotEvent, PluginState
+from src.database.models import Base, BotEvent, BotRecord, BotUser, PluginState
 
 __all__ = [
     "DatabaseManager",
