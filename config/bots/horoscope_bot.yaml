@@ -1,6 +1,6 @@
 # Horoscope Bot Configuration
 
-id: "horoscope_bot"
+id: "my_horoscopes_bot"
 name: "Daily Horoscope"
 description: "AI-powered daily horoscope with subscription delivery"
 enabled: true
