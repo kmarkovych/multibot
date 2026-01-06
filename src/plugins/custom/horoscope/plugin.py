@@ -686,6 +686,44 @@ class HoroscopePlugin(BasePlugin):
         except HoroscopeGenerationError as e:
             await message.edit_text(f"\u274c {e}")
 
+    async def _update_bot_info_if_changed(
+        self,
+        bot: Bot,
+        language_code: str | None,
+        name: str,
+        description: str,
+        short_description: str,
+        commands: list[BotCommand],
+    ) -> None:
+        """Update bot info only if values have changed to avoid flood control."""
+        # Check and update name
+        current_name = await bot.get_my_name(language_code=language_code)
+        if current_name.name != name:
+            await bot.set_my_name(name, language_code=language_code)
+            logger.debug(f"Updated bot name for lang={language_code}")
+
+        # Check and update description
+        current_desc = await bot.get_my_description(language_code=language_code)
+        if current_desc.description != description:
+            await bot.set_my_description(description, language_code=language_code)
+            logger.debug(f"Updated bot description for lang={language_code}")
+
+        # Check and update short description
+        current_short = await bot.get_my_short_description(language_code=language_code)
+        if current_short.short_description != short_description:
+            await bot.set_my_short_description(short_description, language_code=language_code)
+            logger.debug(f"Updated bot short description for lang={language_code}")
+
+        # Check and update commands
+        current_commands = await bot.get_my_commands(language_code=language_code)
+        commands_changed = len(current_commands) != len(commands) or any(
+            c1.command != c2.command or c1.description != c2.description
+            for c1, c2 in zip(current_commands, commands)
+        )
+        if commands_changed:
+            await bot.set_my_commands(commands, language_code=language_code)
+            logger.debug(f"Updated bot commands for lang={language_code}")
+
     async def on_load(self, bot: Bot) -> None:
         """Initialize plugin components when loaded."""
         self._bot = bot
@@ -713,7 +751,7 @@ class HoroscopePlugin(BasePlugin):
         # Start scheduler
         await self._scheduler.start()
 
-        # Set bot name, commands, description for each language
+        # Update bot info for each language (only if changed)
         for lang in SUPPORTED_LANGUAGES:
             commands = [
                 BotCommand(command="start", description=t("cmd_start", lang)),
@@ -723,11 +761,13 @@ class HoroscopePlugin(BasePlugin):
                 BotCommand(command="settings", description=t("cmd_settings", lang)),
                 BotCommand(command="help", description=t("cmd_help", lang)),
             ]
-            await bot.set_my_name(t("bot_name", lang), language_code=lang)
-            await bot.set_my_commands(commands, language_code=lang)
-            await bot.set_my_description(t("bot_description", lang), language_code=lang)
-            await bot.set_my_short_description(
-                t("bot_short_description", lang), language_code=lang
+            await self._update_bot_info_if_changed(
+                bot=bot,
+                language_code=lang,
+                name=t("bot_name", lang),
+                description=t("bot_description", lang),
+                short_description=t("bot_short_description", lang),
+                commands=commands,
             )
 
         # Set defaults (English) for users without language preference
@@ -739,10 +779,14 @@ class HoroscopePlugin(BasePlugin):
             BotCommand(command="settings", description=t("cmd_settings", "en")),
             BotCommand(command="help", description=t("cmd_help", "en")),
         ]
-        await bot.set_my_name(t("bot_name", "en"))
-        await bot.set_my_commands(default_commands)
-        await bot.set_my_description(t("bot_description", "en"))
-        await bot.set_my_short_description(t("bot_short_description", "en"))
+        await self._update_bot_info_if_changed(
+            bot=bot,
+            language_code=None,
+            name=t("bot_name", "en"),
+            description=t("bot_description", "en"),
+            short_description=t("bot_short_description", "en"),
+            commands=default_commands,
+        )
 
         logger.info("Horoscope plugin loaded and scheduler started")
 
