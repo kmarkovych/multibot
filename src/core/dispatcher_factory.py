@@ -166,6 +166,44 @@ class DispatcherFactory:
             dispatcher.message.middleware(DatabaseMiddleware(db=self.db))
             dispatcher.callback_query.middleware(DatabaseMiddleware(db=self.db))
 
+        # Add token middleware if billing plugin is enabled
+        if self.db and config.plugins:
+            billing_config = None
+            for p in config.plugins:
+                if p.name == "billing" and p.enabled:
+                    billing_config = p.config
+                    break
+
+            if billing_config is not None:
+                from src.billing.token_manager import TokenManager, TokenPackage
+                from src.middleware.tokens import TokenMiddleware
+
+                # Parse packages from config
+                packages_config = billing_config.get("packages", [])
+                packages = [
+                    TokenPackage(
+                        id=p["id"],
+                        stars=p["stars"],
+                        tokens=p["tokens"],
+                        label=p["label"],
+                        description=p.get("description", ""),
+                    )
+                    for p in packages_config
+                ]
+
+                token_manager = TokenManager(
+                    db=self.db,
+                    bot_id=bot_id,
+                    free_tokens=billing_config.get("free_tokens", 50),
+                    action_costs=billing_config.get("action_costs", {}),
+                    packages=packages,
+                )
+
+                token_mw = TokenMiddleware(token_manager=token_manager)
+                dispatcher.message.middleware(token_mw)
+                dispatcher.callback_query.middleware(token_mw)
+                logger.debug(f"Added token middleware for bot {bot_id}")
+
         # Add rate limiting if enabled
         if config.rate_limiting and config.rate_limiting.enabled:
             from src.middleware.rate_limit import RateLimitMiddleware

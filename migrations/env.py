@@ -15,6 +15,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.database.models import Base
 
+# Import additional models to register with Base metadata
+from src.billing.models import TokenTransaction, UserToken  # noqa: F401
+
 # Alembic Config object
 config = context.config
 
