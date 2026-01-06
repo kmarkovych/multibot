@@ -65,8 +65,7 @@ jobs:
             docker compose down
             docker compose up -d --build
             docker compose exec multibot sh -c "cd migrations && alembic upgrade head"
-            docker compose restart multibot
-            sleep 10
+            sleep 20
             docker compose ps
 
       - name: Verify deployment
