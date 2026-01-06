@@ -65,11 +65,6 @@ class BotRecord(Base):
         back_populates="bot",
         cascade="all, delete-orphan",
     )
-    plugin_states: Mapped[list["PluginState"]] = relationship(
-        "PluginState",
-        back_populates="bot",
-        cascade="all, delete-orphan",
-    )
 
     def __repr__(self) -> str:
         return f"<BotRecord(id={self.id!r}, name={self.name!r})>"
@@ -154,11 +149,7 @@ class PluginState(Base):
     __tablename__ = "plugin_states"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    bot_id: Mapped[str] = mapped_column(
-        String(64),
-        ForeignKey("bots.id", ondelete="CASCADE"),
-        nullable=False,
-    )
+    bot_id: Mapped[str] = mapped_column(String(64), nullable=False)
     plugin_name: Mapped[str] = mapped_column(String(128), nullable=False)
     state_key: Mapped[str] = mapped_column(String(255), nullable=False)
     state_value: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
@@ -178,9 +169,6 @@ class PluginState(Base):
             unique=True,
         ),
     )
-
-    # Relationships
-    bot: Mapped["BotRecord"] = relationship("BotRecord", back_populates="plugin_states")
 
     def __repr__(self) -> str:
         return f"<PluginState(plugin={self.plugin_name!r}, key={self.state_key!r})>"
