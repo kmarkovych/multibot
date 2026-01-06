@@ -11,6 +11,7 @@ from sqlalchemy import select
 from src.database.models import PluginState
 from src.database.repositories.bot_repository import PluginStateRepository
 
+from .i18n import get_lang
 from .zodiac import ZodiacSign
 
 if TYPE_CHECKING:
@@ -28,22 +29,26 @@ class HoroscopeCache:
         self.db = db
         self.bot_id = bot_id
 
-    def _cache_key(self, sign: ZodiacSign, target_date: date) -> str:
+    def _cache_key(self, sign: ZodiacSign, target_date: date, lang: str) -> str:
         """Generate cache key for a horoscope."""
-        return f"cache_{sign.name.lower()}_{target_date.isoformat()}"
+        return f"cache_{sign.name.lower()}_{target_date.isoformat()}_{lang}"
 
-    async def get(self, sign: ZodiacSign, target_date: date) -> str | None:
+    async def get(
+        self, sign: ZodiacSign, target_date: date, lang: str | None = None
+    ) -> str | None:
         """
         Get cached horoscope if available.
 
         Args:
             sign: Zodiac sign
             target_date: Date of the horoscope
+            lang: Language code
 
         Returns:
             Cached horoscope text or None if not cached
         """
-        cache_key = self._cache_key(sign, target_date)
+        lang = get_lang(lang)
+        cache_key = self._cache_key(sign, target_date, lang)
 
         try:
             async with self.db.session() as session:
@@ -61,7 +66,9 @@ class HoroscopeCache:
             logger.error(f"Error reading cache: {e}")
             return None
 
-    async def set(self, sign: ZodiacSign, target_date: date, horoscope: str) -> None:
+    async def set(
+        self, sign: ZodiacSign, target_date: date, horoscope: str, lang: str | None = None
+    ) -> None:
         """
         Cache a horoscope.
 
@@ -69,8 +76,10 @@ class HoroscopeCache:
             sign: Zodiac sign
             target_date: Date of the horoscope
             horoscope: Horoscope text to cache
+            lang: Language code
         """
-        cache_key = self._cache_key(sign, target_date)
+        lang = get_lang(lang)
+        cache_key = self._cache_key(sign, target_date, lang)
 
         try:
             async with self.db.session() as session:

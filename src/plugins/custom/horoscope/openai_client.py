@@ -7,9 +7,16 @@ from datetime import date
 
 from openai import AsyncOpenAI, RateLimitError
 
+from .i18n import get_lang
 from .zodiac import ZodiacSign
 
 logger = logging.getLogger(__name__)
+
+# Language names for prompts
+LANGUAGE_NAMES = {
+    "en": "English",
+    "uk": "Ukrainian",
+}
 
 
 class HoroscopeGenerationError(Exception):
@@ -33,13 +40,16 @@ class OpenAIClient:
             self._client = AsyncOpenAI(api_key=self.api_key)
         return self._client
 
-    async def generate_horoscope(self, sign: ZodiacSign, target_date: date) -> str:
+    async def generate_horoscope(
+        self, sign: ZodiacSign, target_date: date, lang: str | None = None
+    ) -> str:
         """
         Generate a horoscope for the given zodiac sign and date.
 
         Args:
             sign: The zodiac sign to generate horoscope for
             target_date: The date for the horoscope
+            lang: Language code for the horoscope
 
         Returns:
             Generated horoscope text
@@ -48,8 +58,12 @@ class OpenAIClient:
             HoroscopeGenerationError: If generation fails
         """
         client = await self._get_client()
+        lang = get_lang(lang)
+        language_name = LANGUAGE_NAMES.get(lang, "English")
 
         prompt = f"""Generate a daily horoscope for {sign.value} for {target_date.strftime('%B %d, %Y')}.
+
+IMPORTANT: Write the entire horoscope in {language_name} language.
 
 Include insights about:
 - Love & Relationships
@@ -64,9 +78,9 @@ Guidelines:
 - Use a warm, friendly tone
 
 Format using HTML tags for Telegram:
-- Use <b>Section Name:</b> for section headers
+- Use <b>Section Name:</b> for section headers (in {language_name})
 - Use plain text for content
-- End with <b>Lucky Numbers:</b> followed by the numbers
+- End with <b>Lucky Numbers:</b> (in {language_name}) followed by the numbers
 - Do NOT use markdown formatting like ** or __"""
 
         try:
@@ -75,9 +89,10 @@ Format using HTML tags for Telegram:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a mystical astrologer providing daily horoscopes. "
-                        "Your predictions are uplifting, insightful, and entertaining. "
-                        "Always format output using HTML tags (like <b> for bold), never markdown.",
+                        "content": f"You are a mystical astrologer providing daily horoscopes. "
+                        f"Your predictions are uplifting, insightful, and entertaining. "
+                        f"Always write in {language_name} and format output using HTML tags "
+                        f"(like <b> for bold), never markdown.",
                     },
                     {"role": "user", "content": prompt},
                 ],

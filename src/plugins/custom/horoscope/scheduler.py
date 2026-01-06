@@ -135,19 +135,19 @@ class HoroscopeScheduler:
             logger.error(f"Could not generate horoscope: {e}")
 
     async def _get_or_generate_horoscope(
-        self, sign: ZodiacSign, target_date: date
+        self, sign: ZodiacSign, target_date: date, lang: str | None = None
     ) -> str:
         """Get cached horoscope or generate a new one."""
         # Try cache first
-        cached = await self.cache.get(sign, target_date)
+        cached = await self.cache.get(sign, target_date, lang)
         if cached:
             return cached
 
         # Generate new horoscope
-        horoscope = await self.openai_client.generate_horoscope(sign, target_date)
+        horoscope = await self.openai_client.generate_horoscope(sign, target_date, lang)
 
         # Cache for future requests
-        await self.cache.set(sign, target_date, horoscope)
+        await self.cache.set(sign, target_date, horoscope, lang)
 
         return horoscope
 
@@ -175,5 +175,5 @@ class HoroscopeScheduler:
             Formatted horoscope message
         """
         today = date.today()
-        horoscope = await self._get_or_generate_horoscope(sign, today)
+        horoscope = await self._get_or_generate_horoscope(sign, today, lang)
         return format_horoscope_message(sign, horoscope, today, lang)
