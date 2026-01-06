@@ -40,12 +40,23 @@ class Md2PdfPlugin(BasePlugin):
     - Convert .md files to PDF
     - Customizable styles
     - Multiple themes (light/dark)
+    - Auto-combine split messages (handles Telegram's 4096 char limit)
     """
 
     name = "md2pdf"
     description = "Convert Markdown to PDF"
     version = "1.0.0"
     author = "Multibot System"
+
+    # Buffer delay in seconds - wait for more messages before processing
+    BUFFER_DELAY = 1.5
+
+    def __init__(self, config: dict | None = None):
+        super().__init__(config)
+        # Buffer for combining split messages: {chat_id: [messages]}
+        self._message_buffers: dict[int, list[str]] = {}
+        # Pending buffer tasks: {chat_id: asyncio.Task}
+        self._buffer_tasks: dict[int, asyncio.Task] = {}
 
     # Default CSS styles for PDF
     DEFAULT_CSS = """
@@ -328,22 +339,13 @@ print("Hello, World!")
 
         @router.message(F.text & ~F.text.startswith("/"))
         async def handle_text(message: Message, state: FSMContext) -> None:
-            """Handle markdown text input."""
+            """Handle markdown text input with buffering for split messages."""
             markdown_text = message.text
+            chat_id = message.chat.id
 
             # Skip very short messages
             if len(markdown_text) < 10:
                 return
-
-            # Warn if message might be truncated (close to Telegram's 4096 limit)
-            if len(markdown_text) > 4000:
-                await message.answer(
-                    "⚠️ <b>Long content detected!</b>\n\n"
-                    "Your text is close to Telegram's 4096 character limit. "
-                    "If your document is longer, please send it as a <code>.md</code> file "
-                    "to avoid splitting into multiple PDFs.",
-                    parse_mode="HTML",
-                )
 
             # Check if it looks like markdown (has some markdown syntax)
             markdown_indicators = ['#', '*', '_', '`', '[', '|', '-', '>']
@@ -353,14 +355,58 @@ print("Hello, World!")
                 if current_state != ConvertStates.waiting_for_markdown:
                     return
 
-            # Generate filename from first line or use default
-            first_line = markdown_text.split('\n')[0]
-            filename = first_line.strip('#').strip()[:50] or "document"
-            # Clean filename
-            filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_')).strip()
-            filename = filename or "document"
+            # Add message to buffer
+            if chat_id not in self._message_buffers:
+                self._message_buffers[chat_id] = []
+            self._message_buffers[chat_id].append(markdown_text)
 
-            await self._convert_and_send(message, state, markdown_text, filename)
+            # Cancel existing buffer task if any
+            if chat_id in self._buffer_tasks:
+                self._buffer_tasks[chat_id].cancel()
+                try:
+                    await self._buffer_tasks[chat_id]
+                except asyncio.CancelledError:
+                    pass
+
+            # Create new delayed task to process buffered messages
+            async def process_after_delay():
+                await asyncio.sleep(self.BUFFER_DELAY)
+                await self._process_buffered_messages(chat_id, message, state)
+
+            self._buffer_tasks[chat_id] = asyncio.create_task(process_after_delay())
+
+    async def _process_buffered_messages(
+        self,
+        chat_id: int,
+        message: Message,
+        state: FSMContext,
+    ) -> None:
+        """Process all buffered messages for a chat as a single PDF."""
+        # Get and clear the buffer
+        messages = self._message_buffers.pop(chat_id, [])
+        self._buffer_tasks.pop(chat_id, None)
+
+        if not messages:
+            return
+
+        # Combine all messages
+        markdown_text = "\n\n".join(messages)
+
+        # Notify if multiple messages were combined
+        if len(messages) > 1:
+            await message.answer(
+                f"📎 <b>Combined {len(messages)} messages</b> into a single document.",
+                parse_mode="HTML",
+            )
+
+        # Generate filename from first line or use default
+        first_line = markdown_text.split('\n')[0]
+        filename = first_line.strip('#').strip()[:50] or "document"
+        # Clean filename
+        filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_')).strip()
+        filename = filename or "document"
+
+        await self._convert_and_send(message, state, markdown_text, filename)
 
     async def _convert_and_send(
         self,
