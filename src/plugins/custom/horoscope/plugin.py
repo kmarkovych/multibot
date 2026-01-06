@@ -472,7 +472,7 @@ class HoroscopePlugin(BasePlugin):
         # Start scheduler
         await self._scheduler.start()
 
-        # Set bot commands for each supported language
+        # Set bot commands, description, and short description for each language
         for lang in SUPPORTED_LANGUAGES:
             commands = [
                 BotCommand(command="start", description=t("cmd_start", lang)),
@@ -483,8 +483,12 @@ class HoroscopePlugin(BasePlugin):
                 BotCommand(command="help", description=t("cmd_help", lang)),
             ]
             await bot.set_my_commands(commands, language_code=lang)
+            await bot.set_my_description(t("bot_description", lang), language_code=lang)
+            await bot.set_my_short_description(
+                t("bot_short_description", lang), language_code=lang
+            )
 
-        # Set default commands (English) for users without language preference
+        # Set defaults (English) for users without language preference
         default_commands = [
             BotCommand(command="start", description=t("cmd_start", "en")),
             BotCommand(command="horoscope", description=t("cmd_horoscope", "en")),
@@ -494,6 +498,8 @@ class HoroscopePlugin(BasePlugin):
             BotCommand(command="help", description=t("cmd_help", "en")),
         ]
         await bot.set_my_commands(default_commands)
+        await bot.set_my_description(t("bot_description", "en"))
+        await bot.set_my_short_description(t("bot_short_description", "en"))
 
         logger.info("Horoscope plugin loaded and scheduler started")
 
@@ -505,7 +511,9 @@ class HoroscopePlugin(BasePlugin):
         if self._openai:
             await self._openai.close()
 
-        # Clear bot commands menu
+        # Clear bot commands, description, and short description
         await bot.delete_my_commands()
+        await bot.set_my_description("")
+        await bot.set_my_short_description("")
 
         logger.info("Horoscope plugin unloaded")

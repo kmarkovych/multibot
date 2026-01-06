@@ -5,12 +5,23 @@ from __future__ import annotations
 from typing import Any
 
 # Supported languages
-SUPPORTED_LANGUAGES = ["en", "uk"]
+SUPPORTED_LANGUAGES = ["en", "uk", "pt", "kk"]
 DEFAULT_LANGUAGE = "en"
 
 # Translations dictionary
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
+        # Bot info
+        "bot_description": """✨ Your Personal AI Horoscope Bot ✨
+
+Get daily horoscopes powered by artificial intelligence!
+
+• Personalized readings for all 12 zodiac signs
+• Subscribe to receive your horoscope automatically
+• Choose your preferred delivery time
+
+Start now and discover what the stars have in store for you!""",
+        "bot_short_description": "AI-powered daily horoscopes for all zodiac signs ✨",
         # Commands
         "cmd_start": "Main menu",
         "cmd_horoscope": "Get today's horoscope",
@@ -99,6 +110,17 @@ Subscribe to receive daily horoscopes!""",
         "have_wonderful_day": "Have a wonderful day! ✨",
     },
     "uk": {
+        # Bot info
+        "bot_description": """✨ Ваш Особистий AI Бот Гороскопів ✨
+
+Отримуйте щоденні гороскопи на основі штучного інтелекту!
+
+• Персоналізовані передбачення для всіх 12 знаків зодіаку
+• Підпишіться на автоматичну доставку гороскопу
+• Оберіть зручний час доставки
+
+Почніть зараз і дізнайтеся, що вам приготували зірки!""",
+        "bot_short_description": "Щоденні AI-гороскопи для всіх знаків зодіаку ✨",
         # Commands
         "cmd_start": "Головне меню",
         "cmd_horoscope": "Отримати гороскоп на сьогодні",
@@ -185,6 +207,204 @@ Subscribe to receive daily horoscopes!""",
 <b>Порада:</b> Гороскопи генеруються за допомогою ШІ та кешуються щодня для кожного знаку.""",
         # Horoscope footer
         "have_wonderful_day": "Гарного дня! ✨",
+    },
+    "pt": {
+        # Bot info
+        "bot_description": """✨ Seu Bot Pessoal de Horóscopo com IA ✨
+
+Receba horóscopos diários gerados por inteligência artificial!
+
+• Leituras personalizadas para todos os 12 signos do zodíaco
+• Assine para receber seu horóscopo automaticamente
+• Escolha seu horário preferido de entrega
+
+Comece agora e descubra o que as estrelas reservam para você!""",
+        "bot_short_description": "Horóscopos diários com IA para todos os signos ✨",
+        # Commands
+        "cmd_start": "Menu principal",
+        "cmd_horoscope": "Ver horóscopo de hoje",
+        "cmd_subscribe": "Assinar entrega diária",
+        "cmd_unsubscribe": "Cancelar assinatura",
+        "cmd_settings": "Ver configurações",
+        "cmd_help": "Mostrar ajuda",
+        # Welcome
+        "welcome": """<b>⭐ Bem-vindo ao Bot de Horóscopo!</b>
+
+Posso fornecer horóscopos diários personalizados com IA.
+
+<b>Recursos:</b>
+• Receba seu horóscopo diário
+• Assine para receber automaticamente
+• Escolha seu horário preferido de entrega
+
+Selecione uma opção abaixo para começar!""",
+        # Menu buttons
+        "btn_get_horoscope": "⭐ Ver Horóscopo",
+        "btn_subscribe": "📅 Assinar",
+        "btn_settings": "⚙️ Configurações",
+        "btn_other_sign": "♈ Outro Signo",
+        "btn_menu": "« Menu",
+        "btn_change_sign": "♈ Mudar Signo",
+        "btn_change_time": "⏰ Mudar Horário",
+        "btn_unsubscribe": "❌ Cancelar",
+        "btn_subscribe_now": "✅ Assinar",
+        "btn_back": "« Voltar",
+        "btn_confirm": "✅ Confirmar",
+        "btn_cancel": "❌ Cancelar",
+        # Messages
+        "select_sign": "<b>♈ Selecione Seu Signo</b>\n\nEscolha seu signo para ver o horóscopo de hoje:",
+        "select_sign_change": "<b>♈ Mudar Seu Signo</b>\n\nSelecione seu novo signo:",
+        "subscribe_select_sign": "<b>📅 Assinar Horóscopo Diário</b>\n\nPrimeiro, selecione seu signo:",
+        "select_time": "<b>⏰ Selecione o Horário de Entrega</b>\n\nSigno: {sign}\n\nQuando você gostaria de receber seu horóscopo diário? (UTC)",
+        "change_time": "<b>⏰ Mudar Horário de Entrega</b>\n\nSelecione seu horário preferido (UTC):",
+        "subscribed": """<b>✅ Assinatura Confirmada!</b>
+
+<b>Signo:</b> {sign}
+<b>Entrega:</b> Diariamente às {hour}:00 UTC
+
+Você receberá seu primeiro horóscopo no horário agendado.
+Use /horoscope para ver o horóscopo de hoje agora!""",
+        "unsubscribe_confirm": "<b>❌ Cancelar Assinatura?</b>\n\nVocê está assinando o horóscopo de {sign} diariamente às {hour}:00 UTC.\n\nDeseja cancelar?",
+        "unsubscribed": """<b>✅ Assinatura Cancelada</b>
+
+Você cancelou a assinatura de horóscopos diários.
+Você ainda pode usar /horoscope para ver seu horóscopo a qualquer momento!""",
+        "settings_with_sub": """<b>⚙️ Suas Configurações</b>
+
+<b>Signo:</b> {sign}
+<b>Entrega:</b> Diariamente às {hour}:00 UTC
+<b>Status:</b> ✅ Ativo""",
+        "settings_no_sub": """<b>⚙️ Configurações</b>
+
+Você ainda não tem uma assinatura ativa.
+Assine para receber horóscopos diários!""",
+        "settings_cancelled": "<b>⚙️ Configurações</b>\n\nAção cancelada.",
+        "main_menu": "<b>⭐ Bot de Horóscopo</b>\n\nSelecione uma opção:",
+        "generating": "⏳ Gerando seu horóscopo...",
+        "service_not_ready": "Serviço não disponível. Tente novamente mais tarde.",
+        "no_subscription": "Você não tem uma assinatura ativa.",
+        "cancelled": "Cancelado",
+        "sub_cancelled": "Assinatura cancelada.\n\nUse /start para voltar ao menu principal.",
+        "select_sign_first": "Por favor, selecione seu signo primeiro",
+        "invalid_sign": "Signo inválido",
+        # Help
+        "help": """<b>❓ Ajuda do Bot de Horóscopo</b>
+
+<b>Comandos:</b>
+/start - Mostrar menu principal
+/horoscope - Ver horóscopo de hoje
+/subscribe - Assinar entrega diária
+/unsubscribe - Cancelar assinatura
+/settings - Ver e alterar configurações
+/help - Mostrar esta ajuda
+
+<b>Como funciona:</b>
+1. Selecione seu signo do zodíaco
+2. Receba seu horóscopo personalizado
+3. Assine para receber diariamente!
+
+<b>Dica:</b> Os horóscopos são gerados por IA e armazenados diariamente para cada signo.""",
+        # Horoscope footer
+        "have_wonderful_day": "Tenha um dia maravilhoso! ✨",
+    },
+    "kk": {
+        # Bot info
+        "bot_description": """✨ Сіздің Жеке AI Жұлдызнама Ботыңыз ✨
+
+Жасанды интеллект негізінде күнделікті жұлдызнамалар алыңыз!
+
+• Барлық 12 зодиак белгісі үшін жеке болжамдар
+• Жұлдызнамаңызды автоматты түрде алу үшін жазылыңыз
+• Қалаған жеткізу уақытын таңдаңыз
+
+Қазір бастаңыз және жұлдыздар сізге не дайындағанын біліңіз!""",
+        "bot_short_description": "Барлық зодиак белгілері үшін AI жұлдызнамалар ✨",
+        # Commands
+        "cmd_start": "Басты мәзір",
+        "cmd_horoscope": "Бүгінгі жұлдызнама",
+        "cmd_subscribe": "Күнделікті жіберуге жазылу",
+        "cmd_unsubscribe": "Жазылымды болдырмау",
+        "cmd_settings": "Параметрлерді көру",
+        "cmd_help": "Анықтаманы көрсету",
+        # Welcome
+        "welcome": """<b>⭐ Жұлдызнама ботына қош келдіңіз!</b>
+
+Мен сізге AI көмегімен жасалған жеке күнделікті жұлдызнамаларды ұсына аламын.
+
+<b>Мүмкіндіктер:</b>
+• Күнделікті жұлдызнамаңызды алыңыз
+• Автоматты жіберуге жазылыңыз
+• Қалаған жеткізу уақытын таңдаңыз
+
+Бастау үшін төмендегі опцияны таңдаңыз!""",
+        # Menu buttons
+        "btn_get_horoscope": "⭐ Жұлдызнама",
+        "btn_subscribe": "📅 Жазылу",
+        "btn_settings": "⚙️ Параметрлер",
+        "btn_other_sign": "♈ Басқа белгі",
+        "btn_menu": "« Мәзір",
+        "btn_change_sign": "♈ Белгіні өзгерту",
+        "btn_change_time": "⏰ Уақытты өзгерту",
+        "btn_unsubscribe": "❌ Бас тарту",
+        "btn_subscribe_now": "✅ Жазылу",
+        "btn_back": "« Артқа",
+        "btn_confirm": "✅ Растау",
+        "btn_cancel": "❌ Болдырмау",
+        # Messages
+        "select_sign": "<b>♈ Зодиак белгіңізді таңдаңыз</b>\n\nБүгінгі жұлдызнаманы алу үшін белгіңізді таңдаңыз:",
+        "select_sign_change": "<b>♈ Зодиак белгіңізді өзгертіңіз</b>\n\nЖаңа белгіңізді таңдаңыз:",
+        "subscribe_select_sign": "<b>📅 Күнделікті жұлдызнамаға жазылу</b>\n\nАлдымен зодиак белгіңізді таңдаңыз:",
+        "select_time": "<b>⏰ Жеткізу уақытын таңдаңыз</b>\n\nБелгі: {sign}\n\nКүнделікті жұлдызнамаңызды қашан алғыңыз келеді? (UTC)",
+        "change_time": "<b>⏰ Жеткізу уақытын өзгерту</b>\n\nҚалаған уақытты таңдаңыз (UTC):",
+        "subscribed": """<b>✅ Сәтті жазылдыңыз!</b>
+
+<b>Белгі:</b> {sign}
+<b>Жеткізу:</b> Күн сайын {hour}:00 UTC
+
+Сіз бірінші жұлдызнаманы жоспарланған уақытта аласыз.
+Бүгінгі жұлдызнаманы қазір алу үшін /horoscope пайдаланыңыз!""",
+        "unsubscribe_confirm": "<b>❌ Жазылымнан бас тартасыз ба?</b>\n\nСіз қазір {sign} жұлдызнамасын күн сайын {hour}:00 UTC-де алып жатырсыз.\n\nБас тартқыңыз келе ме?",
+        "unsubscribed": """<b>✅ Жазылымнан бас тартылды</b>
+
+Сіз күнделікті жұлдызнамалардан бас тарттыңыз.
+Кез келген уақытта /horoscope пайдаланып жұлдызнамаңызды ала аласыз!""",
+        "settings_with_sub": """<b>⚙️ Сіздің параметрлеріңіз</b>
+
+<b>Белгі:</b> {sign}
+<b>Жеткізу:</b> Күн сайын {hour}:00 UTC
+<b>Күй:</b> ✅ Белсенді""",
+        "settings_no_sub": """<b>⚙️ Параметрлер</b>
+
+Сізде әлі белсенді жазылым жоқ.
+Күнделікті жұлдызнамалар алу үшін жазылыңыз!""",
+        "settings_cancelled": "<b>⚙️ Параметрлер</b>\n\nӘрекет тоқтатылды.",
+        "main_menu": "<b>⭐ Жұлдызнама боты</b>\n\nОпцияны таңдаңыз:",
+        "generating": "⏳ Жұлдызнамаңыз жасалуда...",
+        "service_not_ready": "Қызмет дайын емес. Кейінірек қайталап көріңіз.",
+        "no_subscription": "Сізде белсенді жазылым жоқ.",
+        "cancelled": "Тоқтатылды",
+        "sub_cancelled": "Жазылым тоқтатылды.\n\nБасты мәзірге оралу үшін /start пайдаланыңыз.",
+        "select_sign_first": "Алдымен белгіңізді таңдаңыз",
+        "invalid_sign": "Жарамсыз белгі",
+        # Help
+        "help": """<b>❓ Жұлдызнама боты анықтамасы</b>
+
+<b>Командалар:</b>
+/start - Басты мәзірді көрсету
+/horoscope - Бүгінгі жұлдызнаманы алу
+/subscribe - Күнделікті жіберуге жазылу
+/unsubscribe - Жазылымды болдырмау
+/settings - Параметрлерді көру және өзгерту
+/help - Осы анықтаманы көрсету
+
+<b>Қалай жұмыс істейді:</b>
+1. Зодиак белгіңізді таңдаңыз
+2. Жеке жұлдызнамаңызды алыңыз
+3. Күн сайын алу үшін жазылыңыз!
+
+<b>Кеңес:</b> Жұлдызнамалар AI көмегімен жасалады және әр белгі үшін күн сайын сақталады.""",
+        # Horoscope footer
+        "have_wonderful_day": "Күніңіз жарқын болсын! ✨",
     },
 }
 

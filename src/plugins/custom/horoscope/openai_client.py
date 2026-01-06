@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 LANGUAGE_NAMES = {
     "en": "English",
     "uk": "Ukrainian",
+    "pt": "Brazilian Portuguese",
+    "kk": "Kazakh",
 }
 
 
