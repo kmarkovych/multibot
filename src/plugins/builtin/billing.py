@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from aiogram import Bot, F, Router
@@ -24,6 +25,24 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+# Type alias for translator function: (key, lang, **kwargs) -> str
+TranslatorFunc = Callable[..., str]
+
+# Global registry for translators per bot_id
+# This allows other plugins to register their translators for billing to use
+_translator_registry: dict[str, TranslatorFunc] = {}
+
+
+def register_translator(bot_id: str, translator: TranslatorFunc) -> None:
+    """Register a translator function for a bot."""
+    _translator_registry[bot_id] = translator
+    logger.debug(f"Registered translator for bot {bot_id}")
+
+
+def get_registered_translator(bot_id: str) -> TranslatorFunc | None:
+    """Get registered translator for a bot."""
+    return _translator_registry.get(bot_id)
 
 
 class BillingPlugin(BasePlugin):
@@ -67,6 +86,38 @@ class BillingPlugin(BasePlugin):
     def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
         self._token_manager: TokenManager | None = None
+        self._translator: TranslatorFunc | None = None
+
+    def set_translator(self, translator: TranslatorFunc) -> None:
+        """Set the translator function for i18n support."""
+        self._translator = translator
+
+    def _translate(
+        self, key: str, lang: str | None = None, default: str | None = None, **kwargs: Any
+    ) -> str:
+        """Translate a key, falling back to default if no translator or key not found."""
+        if self._translator:
+            result = self._translator(key, lang, **kwargs)
+            # If translator returns the key itself, it means key wasn't found
+            if result != key:
+                return result
+        return default or key
+
+    def _get_package_label(self, package: TokenPackage, lang: str | None = None) -> str:
+        """Get translated package label."""
+        if package.label_key and self._translator:
+            translated = self._translator(package.label_key, lang)
+            if translated != package.label_key:
+                return translated
+        return package.label
+
+    def _get_package_description(self, package: TokenPackage, lang: str | None = None) -> str:
+        """Get translated package description."""
+        if package.description_key and self._translator:
+            translated = self._translator(package.description_key, lang)
+            if translated != package.description_key:
+                return translated
+        return package.description or f"Get {package.tokens} tokens"
 
     def _build_token_manager(self) -> TokenManager:
         """Build TokenManager from config."""
@@ -80,8 +131,10 @@ class BillingPlugin(BasePlugin):
                 id=p["id"],
                 stars=p["stars"],
                 tokens=p["tokens"],
-                label=p["label"],
+                label=p.get("label", ""),
                 description=p.get("description", ""),
+                label_key=p.get("label_key"),
+                description_key=p.get("description_key"),
             )
             for p in packages_config
         ]
@@ -104,7 +157,20 @@ class BillingPlugin(BasePlugin):
     async def on_load(self, bot: Bot) -> None:
         """Initialize token manager on load."""
         self._token_manager = self._build_token_manager()
+
+        # Check for registered translator
+        registered = get_registered_translator(self.bot_id)
+        if registered:
+            self._translator = registered
+            logger.debug(f"Using registered translator for bot {self.bot_id}")
+
         logger.info(f"Billing plugin loaded for bot {self.bot_id}")
+
+    def _get_user_lang(self, user: Any) -> str | None:
+        """Extract language code from user object."""
+        if user and hasattr(user, "language_code"):
+            return user.language_code
+        return None
 
     def setup_handlers(self, router: Router) -> None:
         """Register billing-related handlers."""
@@ -116,6 +182,7 @@ class BillingPlugin(BasePlugin):
             if not user:
                 return
 
+            lang = self._get_user_lang(user)
             stats = await self.token_manager.get_stats(user.id)
             balance = stats["balance"]
             total_purchased = stats["total_purchased"]
@@ -125,19 +192,23 @@ class BillingPlugin(BasePlugin):
             buttons = []
             packages = self.token_manager.get_all_packages()
             if packages:
+                buy_text = self._translate(
+                    "billing_buy_tokens", lang, default="Buy Tokens"
+                )
                 buttons.append(
                     [
                         InlineKeyboardButton(
-                            text="🛒 Buy Tokens",
+                            text=f"🛒 {buy_text}",
                             callback_data="billing:buy_menu",
                         )
                     ]
                 )
 
+            history_text = self._translate("billing_history", lang, default="History")
             buttons.append(
                 [
                     InlineKeyboardButton(
-                        text="📜 History",
+                        text=f"📜 {history_text}",
                         callback_data="billing:history",
                     )
                 ]
@@ -145,25 +216,35 @@ class BillingPlugin(BasePlugin):
 
             keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-            text = (
-                f"💰 **Your Token Balance**\n\n"
-                f"Balance: **{balance}** tokens\n"
-                f"Total purchased: {total_purchased}\n"
-                f"Total used: {total_consumed}\n"
+            title = self._translate(
+                "billing_balance_title", lang, default="Your Token Balance"
+            )
+            balance_line = self._translate(
+                "billing_balance", lang, default=f"Balance: <b>{balance}</b> tokens", balance=balance
+            )
+            purchased_line = self._translate(
+                "billing_total_purchased", lang, default=f"Total purchased: {total_purchased}", total=total_purchased
+            )
+            used_line = self._translate(
+                "billing_total_used", lang, default=f"Total used: {total_consumed}", total=total_consumed
             )
 
-            await message.answer(text, reply_markup=keyboard, parse_mode="Markdown")
+            text = f"💰 <b>{title}</b>\n\n{balance_line}\n{purchased_line}\n{used_line}\n"
+
+            await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
         @router.message(Command("buy"))
         async def cmd_buy(message: Message) -> None:
             """Show available token packages."""
-            await self._show_packages(message)
+            lang = self._get_user_lang(message.from_user)
+            await self._show_packages(message, lang=lang)
 
         @router.callback_query(F.data == "billing:buy_menu")
         async def callback_buy_menu(callback: CallbackQuery) -> None:
             """Show package selection menu."""
+            lang = self._get_user_lang(callback.from_user)
             if callback.message:
-                await self._show_packages(callback.message, edit=True)
+                await self._show_packages(callback.message, edit=True, lang=lang)
             await callback.answer()
 
         @router.callback_query(F.data == "billing:history")
@@ -174,12 +255,18 @@ class BillingPlugin(BasePlugin):
                 await callback.answer()
                 return
 
+            lang = self._get_user_lang(user)
             history = await self.token_manager.get_history(user.id, limit=10)
 
             if not history:
-                text = "📜 No transactions yet."
+                text = "📜 " + self._translate(
+                    "billing_no_history", lang, default="No transactions yet."
+                )
             else:
-                lines = ["📜 **Recent Transactions**\n"]
+                title = self._translate(
+                    "billing_history_title", lang, default="Recent Transactions"
+                )
+                lines = [f"📜 <b>{title}</b>\n"]
                 for tx in history:
                     amount_str = f"+{tx['amount']}" if tx["amount"] > 0 else str(tx["amount"])
                     emoji = "✅" if tx["amount"] > 0 else "📤"
@@ -187,11 +274,12 @@ class BillingPlugin(BasePlugin):
                     lines.append(f"{emoji} {amount_str} tokens - {ref}")
                 text = "\n".join(lines)
 
+            back_text = self._translate("billing_back", lang, default="Back")
             keyboard = InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
-                            text="⬅️ Back",
+                            text=f"⬅️ {back_text}",
                             callback_data="billing:back_to_balance",
                         )
                     ]
@@ -200,7 +288,7 @@ class BillingPlugin(BasePlugin):
 
             if callback.message:
                 await callback.message.edit_text(
-                    text, reply_markup=keyboard, parse_mode="Markdown"
+                    text, reply_markup=keyboard, parse_mode="HTML"
                 )
             await callback.answer()
 
@@ -212,6 +300,7 @@ class BillingPlugin(BasePlugin):
                 await callback.answer()
                 return
 
+            lang = self._get_user_lang(user)
             stats = await self.token_manager.get_stats(user.id)
             balance = stats["balance"]
             total_purchased = stats["total_purchased"]
@@ -220,19 +309,23 @@ class BillingPlugin(BasePlugin):
             buttons = []
             packages = self.token_manager.get_all_packages()
             if packages:
+                buy_text = self._translate(
+                    "billing_buy_tokens", lang, default="Buy Tokens"
+                )
                 buttons.append(
                     [
                         InlineKeyboardButton(
-                            text="🛒 Buy Tokens",
+                            text=f"🛒 {buy_text}",
                             callback_data="billing:buy_menu",
                         )
                     ]
                 )
 
+            history_text = self._translate("billing_history", lang, default="History")
             buttons.append(
                 [
                     InlineKeyboardButton(
-                        text="📜 History",
+                        text=f"📜 {history_text}",
                         callback_data="billing:history",
                     )
                 ]
@@ -240,15 +333,23 @@ class BillingPlugin(BasePlugin):
 
             keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-            text = (
-                f"💰 **Your Token Balance**\n\n"
-                f"Balance: **{balance}** tokens\n"
-                f"Total purchased: {total_purchased}\n"
-                f"Total used: {total_consumed}\n"
+            title = self._translate(
+                "billing_balance_title", lang, default="Your Token Balance"
+            )
+            balance_line = self._translate(
+                "billing_balance", lang, default=f"Balance: <b>{balance}</b> tokens", balance=balance
+            )
+            purchased_line = self._translate(
+                "billing_total_purchased", lang, default=f"Total purchased: {total_purchased}", total=total_purchased
+            )
+            used_line = self._translate(
+                "billing_total_used", lang, default=f"Total used: {total_consumed}", total=total_consumed
             )
 
+            text = f"💰 <b>{title}</b>\n\n{balance_line}\n{purchased_line}\n{used_line}\n"
+
             await callback.message.edit_text(
-                text, reply_markup=keyboard, parse_mode="Markdown"
+                text, reply_markup=keyboard, parse_mode="HTML"
             )
             await callback.answer()
 
@@ -260,12 +361,17 @@ class BillingPlugin(BasePlugin):
                 await callback.answer("Error: User not found", show_alert=True)
                 return
 
+            lang = self._get_user_lang(user)
             package_id = callback.data.split(":", 2)[2] if callback.data else ""
             package = self.token_manager.get_package(package_id)
 
             if not package:
                 await callback.answer("Package not found", show_alert=True)
                 return
+
+            # Get translated label and description
+            label = self._get_package_label(package, lang)
+            description = self._get_package_description(package, lang)
 
             # Create invoice payload
             payload = json.dumps(
@@ -279,12 +385,12 @@ class BillingPlugin(BasePlugin):
             # Send invoice using Telegram Stars
             await bot.send_invoice(
                 chat_id=user.id,
-                title=package.label,
-                description=package.description or f"Get {package.tokens} tokens",
+                title=label,
+                description=description,
                 payload=payload,
                 provider_token="",  # Empty for Telegram Stars
                 currency="XTR",  # XTR = Telegram Stars
-                prices=[LabeledPrice(label=package.label, amount=package.stars)],
+                prices=[LabeledPrice(label=label, amount=package.stars)],
             )
 
             await callback.answer()
@@ -330,6 +436,8 @@ class BillingPlugin(BasePlugin):
             if not payment or not user:
                 return
 
+            lang = self._get_user_lang(user)
+
             try:
                 payload = json.loads(payment.invoice_payload)
                 package_id = payload.get("package_id")
@@ -351,12 +459,29 @@ class BillingPlugin(BasePlugin):
                     metadata={"provider_charge_id": payment.provider_payment_charge_id},
                 )
 
+                success_title = self._translate(
+                    "billing_payment_success", lang, default="Payment Successful!"
+                )
+                received_text = self._translate(
+                    "billing_payment_received", lang,
+                    default=f"You received <b>{package.tokens}</b> tokens.",
+                    tokens=package.tokens
+                )
+                balance_text = self._translate(
+                    "billing_new_balance", lang,
+                    default=f"New balance: <b>{new_balance}</b> tokens.",
+                    balance=new_balance
+                )
+                thank_you = self._translate(
+                    "billing_thank_you", lang, default="Thank you for your purchase!"
+                )
+
                 await message.answer(
-                    f"✅ **Payment Successful!**\n\n"
-                    f"You received **{package.tokens}** tokens.\n"
-                    f"New balance: **{new_balance}** tokens.\n\n"
-                    f"Thank you for your purchase! 🎉",
-                    parse_mode="Markdown",
+                    f"✅ <b>{success_title}</b>\n\n"
+                    f"{received_text}\n"
+                    f"{balance_text}\n\n"
+                    f"{thank_you} 🎉",
+                    parse_mode="HTML",
                 )
 
                 logger.info(
@@ -371,12 +496,17 @@ class BillingPlugin(BasePlugin):
                     f"payment ID: {payment.telegram_payment_charge_id}"
                 )
 
-    async def _show_packages(self, message: Message, edit: bool = False) -> None:
+    async def _show_packages(
+        self, message: Message, edit: bool = False, lang: str | None = None
+    ) -> None:
         """Display available token packages."""
         packages = self.token_manager.get_all_packages()
 
         if not packages:
-            text = "No token packages available at this time."
+            text = self._translate(
+                "billing_no_packages", lang,
+                default="No token packages available at this time."
+            )
             if edit:
                 await message.edit_text(text)
             else:
@@ -384,26 +514,32 @@ class BillingPlugin(BasePlugin):
             return
 
         buttons = []
-        lines = ["🛒 **Available Token Packages**\n"]
+        title = self._translate(
+            "billing_packages_title", lang, default="Available Token Packages"
+        )
+        lines = [f"🛒 <b>{title}</b>\n"]
 
         for package in packages:
+            label = self._get_package_label(package, lang)
+            description = self._get_package_description(package, lang)
             lines.append(
-                f"• **{package.label}** - {package.stars} ⭐\n"
-                f"  {package.description or f'Get {package.tokens} tokens'}"
+                f"• <b>{label}</b> - {package.stars} ⭐\n"
+                f"  {description}"
             )
             buttons.append(
                 [
                     InlineKeyboardButton(
-                        text=f"{package.label} ({package.stars} ⭐)",
+                        text=f"{label} ({package.stars} ⭐)",
                         callback_data=f"billing:purchase:{package.id}",
                     )
                 ]
             )
 
+        back_text = self._translate("billing_back", lang, default="Back")
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text="⬅️ Back",
+                    text=f"⬅️ {back_text}",
                     callback_data="billing:back_to_balance",
                 )
             ]
@@ -413,9 +549,9 @@ class BillingPlugin(BasePlugin):
         text = "\n".join(lines)
 
         if edit:
-            await message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+            await message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
         else:
-            await message.answer(text, reply_markup=keyboard, parse_mode="Markdown")
+            await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
 
 # Export for auto-discovery

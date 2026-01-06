@@ -185,8 +185,10 @@ class DispatcherFactory:
                         id=p["id"],
                         stars=p["stars"],
                         tokens=p["tokens"],
-                        label=p["label"],
+                        label=p.get("label", ""),
                         description=p.get("description", ""),
+                        label_key=p.get("label_key"),
+                        description_key=p.get("description_key"),
                     )
                     for p in packages_config
                 ]

@@ -9,7 +9,12 @@ from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import BotCommand, CallbackQuery, Message
 
+from src.billing import InsufficientTokensError
 from src.plugins.base import BasePlugin
+from src.plugins.builtin.billing import register_translator
+
+if TYPE_CHECKING:
+    from src.billing import TokenManager
 
 from .cache import HoroscopeCache
 from .i18n import SUPPORTED_LANGUAGES, t
@@ -27,9 +32,6 @@ from .scheduler import HoroscopeScheduler
 from .subscription import SubscriptionManager
 from .timezone import DEFAULT_TIMEZONE, format_local_time, get_timezone_display
 from .zodiac import ZodiacSign
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +74,9 @@ class HoroscopePlugin(BasePlugin):
             )
 
         @router.message(Command("horoscope"))
-        async def cmd_horoscope(message: Message) -> None:
+        async def cmd_horoscope(
+            message: Message, token_manager: TokenManager | None = None
+        ) -> None:
             """Get today's horoscope."""
             lang = message.from_user.language_code if message.from_user else None
             if not self._subscriptions or not self._scheduler:
@@ -84,7 +88,7 @@ class HoroscopePlugin(BasePlugin):
 
             if sub:
                 # User has subscription, use their sign
-                await self._send_horoscope(message, sub.zodiac_sign, lang)
+                await self._send_horoscope(message, sub.zodiac_sign, lang, token_manager)
             else:
                 # Ask user to select sign
                 await message.answer(
@@ -160,7 +164,9 @@ class HoroscopePlugin(BasePlugin):
 
         # Callback handlers for main menu
         @router.callback_query(F.data == "menu_horoscope")
-        async def cb_menu_horoscope(callback: CallbackQuery) -> None:
+        async def cb_menu_horoscope(
+            callback: CallbackQuery, token_manager: TokenManager | None = None
+        ) -> None:
             """Handle horoscope menu button."""
             lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
@@ -172,7 +178,13 @@ class HoroscopePlugin(BasePlugin):
 
             if sub:
                 await callback.message.edit_text(t("generating", lang))
-                await self._send_horoscope_edit(callback.message, sub.zodiac_sign, lang)
+                await self._send_horoscope_edit(
+                    callback.message,
+                    sub.zodiac_sign,
+                    lang,
+                    token_manager,
+                    callback.from_user.id,
+                )
             else:
                 await callback.message.edit_text(
                     t("select_sign", lang),
@@ -220,7 +232,9 @@ class HoroscopePlugin(BasePlugin):
 
         # Zodiac sign selection callbacks
         @router.callback_query(F.data.startswith("zodiac_"))
-        async def cb_zodiac_select(callback: CallbackQuery) -> None:
+        async def cb_zodiac_select(
+            callback: CallbackQuery, token_manager: TokenManager | None = None
+        ) -> None:
             """Handle zodiac sign selection."""
             lang = callback.from_user.language_code if callback.from_user else None
             sign_name = callback.data.replace("zodiac_", "")
@@ -249,7 +263,9 @@ class HoroscopePlugin(BasePlugin):
             else:
                 # Just getting horoscope
                 await callback.message.edit_text(t("generating", lang))
-                await self._send_horoscope_edit(callback.message, sign, lang)
+                await self._send_horoscope_edit(
+                    callback.message, sign, lang, token_manager, callback.from_user.id
+                )
 
         # Timezone selection for subscription or settings
         @router.callback_query(F.data.startswith("tz_"))
@@ -571,12 +587,33 @@ class HoroscopePlugin(BasePlugin):
             )
 
     async def _send_horoscope(
-        self, message: Message, sign: ZodiacSign, lang: str | None = None
+        self,
+        message: Message,
+        sign: ZodiacSign,
+        lang: str | None = None,
+        token_manager: TokenManager | None = None,
     ) -> None:
         """Send horoscope as a new message."""
         if not self._scheduler:
             await message.answer(t("service_not_ready", lang))
             return
+
+        # Consume tokens if billing is enabled
+        if token_manager and message.from_user:
+            try:
+                await token_manager.consume(
+                    telegram_id=message.from_user.id,
+                    cost=1,
+                    action="generate_horoscope",
+                )
+            except InsufficientTokensError as e:
+                await message.answer(
+                    t("insufficient_tokens", lang, required=e.required, available=e.available)
+                    if t("insufficient_tokens", lang) != "insufficient_tokens"
+                    else f"⚠️ You need {e.required} token(s) but have {e.available}.\n\n"
+                    f"Use /tokens to check your balance or purchase more.",
+                )
+                return
 
         try:
             processing = await message.answer(t("generating", lang))
@@ -596,15 +633,37 @@ class HoroscopePlugin(BasePlugin):
             await message.answer(f"\u274c {e}")
 
     async def _send_horoscope_edit(
-        self, message: Message, sign: ZodiacSign, lang: str | None = None
+        self,
+        message: Message,
+        sign: ZodiacSign,
+        lang: str | None = None,
+        token_manager: TokenManager | None = None,
+        user_id: int | None = None,
     ) -> None:
         """Send horoscope by editing existing message."""
         if not self._scheduler:
             await message.edit_text(t("service_not_ready", lang))
             return
 
+        # Consume tokens if billing is enabled
+        if token_manager and user_id:
+            try:
+                await token_manager.consume(
+                    telegram_id=user_id,
+                    cost=1,
+                    action="generate_horoscope",
+                )
+            except InsufficientTokensError as e:
+                await message.edit_text(
+                    t("insufficient_tokens", lang, required=e.required, available=e.available)
+                    if t("insufficient_tokens", lang) != "insufficient_tokens"
+                    else f"⚠️ You need {e.required} token(s) but have {e.available}.\n\n"
+                    f"Use /tokens to check your balance or purchase more.",
+                )
+                return
+
         try:
-            horoscope_msg = await self._scheduler.deliver_now(0, sign, lang)
+            horoscope_msg = await self._scheduler.deliver_now(user_id or 0, sign, lang)
             await message.edit_text(
                 horoscope_msg,
                 parse_mode="HTML",
@@ -617,6 +676,9 @@ class HoroscopePlugin(BasePlugin):
     async def on_load(self, bot: Bot) -> None:
         """Initialize plugin components when loaded."""
         self._bot = bot
+
+        # Register translator for billing plugin i18n support
+        register_translator(self.bot_id, t)
 
         # Get API key from config
         api_key = self.get_config("openai_api_key", "")

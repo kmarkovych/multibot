@@ -18,6 +18,37 @@ settings:
 
 # Plugins
 plugins:
+  - name: "billing"
+    enabled: true
+    config:
+      # Free tokens for new users
+      free_tokens: 10
+
+      # Token costs per action
+      action_costs:
+        generate_horoscope: 1
+
+      # Available token packages (Telegram Stars)
+      # Use label_key/description_key for i18n translation support
+      packages:
+        - id: "starter"
+          stars: 25
+          tokens: 30
+          label_key: "billing_package_starter"
+          description_key: "billing_package_starter_desc"
+
+        - id: "standard"
+          stars: 75
+          tokens: 100
+          label_key: "billing_package_standard"
+          description_key: "billing_package_standard_desc"
+
+        - id: "premium"
+          stars: 150
+          tokens: 250
+          label_key: "billing_package_premium"
+          description_key: "billing_package_premium_desc"
+
   - name: "horoscope"
     enabled: true
     config:
@@ -34,7 +65,7 @@ plugins:
     enabled: true
     config:
       show_error_id: true
-      notify_admins: false
+      notify_admins: true
 
 # Access control
 access:

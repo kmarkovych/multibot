@@ -24,6 +24,9 @@ class TokenPackage:
     tokens: int
     label: str
     description: str = ""
+    # Optional translation keys (used instead of label/description when translator provided)
+    label_key: str | None = None
+    description_key: str | None = None
 
 
 class TokenManager:
