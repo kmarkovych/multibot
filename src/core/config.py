@@ -267,11 +267,19 @@ class ConfigManager:
     def _load_and_register_bot(self, config_file: Path) -> None:
         """Load a bot config and register it if valid."""
         try:
+            # Read raw config to get original token reference
+            with open(config_file) as f:
+                raw_config = yaml.safe_load(f)
+            raw_token = raw_config.get("token", "")
+
             bot_config = self.load_bot_config(config_file)
 
             # Skip bots with missing tokens
             if not bot_config.token:
-                print(f"Skipping {config_file.name}: token not configured (set {bot_config.id.upper()}_TOKEN env var)")
+                # Extract env var name from ${VAR_NAME} pattern
+                env_var_match = re.search(r"\$\{([^}]+)\}", raw_token)
+                env_var_hint = f" (set {env_var_match.group(1)} env var)" if env_var_match else ""
+                print(f"Skipping {config_file.name}: token not configured{env_var_hint}")
                 return
 
             # Skip disabled bots
