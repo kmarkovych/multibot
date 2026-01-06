@@ -9,6 +9,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from src.admin.handlers.bot_control import router as bot_control_router
+from src.admin.handlers.stats import router as stats_router
 from src.admin.handlers.status import router as status_router
 from src.plugins.base import BasePlugin
 
@@ -42,10 +43,11 @@ class AdminPlugin(BasePlugin):
                     InlineKeyboardButton(text="📋 List Bots", callback_data="admin_list"),
                 ],
                 [
+                    InlineKeyboardButton(text="📈 Statistics", callback_data="admin_stats_menu"),
                     InlineKeyboardButton(text="💚 Health", callback_data="admin_health"),
-                    InlineKeyboardButton(text="🔄 Reload All", callback_data="admin_reload_all"),
                 ],
                 [
+                    InlineKeyboardButton(text="🔄 Reload All", callback_data="admin_reload_all"),
                     InlineKeyboardButton(text="❓ Help", callback_data="admin_help"),
                 ],
             ]
@@ -80,6 +82,7 @@ class AdminPlugin(BasePlugin):
         # Include sub-routers
         router.include_router(status_router)
         router.include_router(bot_control_router)
+        router.include_router(stats_router)
 
         @router.message(CommandStart())
         async def cmd_start(message: Message, bot_manager: BotManager) -> None:
@@ -485,6 +488,8 @@ Select an action:
 /status &lt;bot_id&gt; - Show detailed status
 /list - List all configured bots
 /health - Show system health
+/stats - Show system statistics
+/stats &lt;bot_id&gt; - Show bot statistics
 
 <b>Bot Control:</b>
 /start_bot &lt;bot_id&gt; - Start a bot

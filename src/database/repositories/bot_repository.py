@@ -159,6 +159,34 @@ class UserRepository(BaseRepository[BotUser]):
         result = await self.session.execute(query)
         return result.scalar() or 0
 
+    async def get_active_users(self, bot_id: str, hours: int = 24) -> int:
+        """Get the number of active users in the past N hours."""
+        from datetime import datetime, timedelta
+
+        from sqlalchemy import func
+
+        since = datetime.utcnow() - timedelta(hours=hours)
+        query = (
+            select(func.count())
+            .select_from(BotUser)
+            .where(
+                BotUser.bot_id == bot_id,
+                BotUser.last_seen_at >= since,
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalar() or 0
+
+    async def get_total_user_count(self) -> int:
+        """Get the total number of users across all bots."""
+        from sqlalchemy import func
+
+        query = select(func.count(func.distinct(BotUser.telegram_id))).select_from(
+            BotUser
+        )
+        result = await self.session.execute(query)
+        return result.scalar() or 0
+
 
 class PluginStateRepository(BaseRepository[PluginState]):
     """Repository for PluginState operations."""

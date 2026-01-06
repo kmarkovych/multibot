@@ -172,3 +172,31 @@ class PluginState(Base):
 
     def __repr__(self) -> str:
         return f"<PluginState(plugin={self.plugin_name!r}, key={self.state_key!r})>"
+
+
+class BotStatistics(Base):
+    """Hourly aggregated statistics for bots."""
+
+    __tablename__ = "bot_statistics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    bot_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    hour_bucket: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    message_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    command_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    callback_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    unique_users: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    new_users: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    command_usage: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+
+    __table_args__ = (
+        Index("ix_bot_statistics_bot_hour", "bot_id", "hour_bucket", unique=True),
+        Index("ix_bot_statistics_hour", "hour_bucket"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<BotStatistics(bot={self.bot_id!r}, hour={self.hour_bucket!r})>"

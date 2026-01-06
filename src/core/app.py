@@ -15,6 +15,7 @@ from src.utils.signals import SignalHandler
 
 if TYPE_CHECKING:
     from src.health.server import HealthServer
+    from src.stats.collector import StatsCollector
     from src.utils.watcher import ConfigWatcher
     from src.webhook.server import WebhookServer
 
@@ -42,6 +43,7 @@ class MultibotApplication:
         self.bot_manager: BotManager | None = None
         self.plugin_registry: PluginRegistry | None = None
         self.dispatcher_factory: DispatcherFactory | None = None
+        self.stats_collector: StatsCollector | None = None
 
         # Servers
         self.health_server: HealthServer | None = None
@@ -64,6 +66,9 @@ class MultibotApplication:
 
         # Initialize database
         await self._init_database()
+
+        # Initialize stats collector
+        await self._init_stats_collector()
 
         # Initialize plugin registry
         await self._init_plugins()
@@ -103,6 +108,10 @@ class MultibotApplication:
         if self.bot_manager:
             await self.bot_manager.shutdown()
 
+        # Stop stats collector (flushes remaining data)
+        if self.stats_collector:
+            await self.stats_collector.stop()
+
         # Stop webhook server
         if self.webhook_server:
             await self.webhook_server.stop()
@@ -123,6 +132,14 @@ class MultibotApplication:
         await self.db.connect()
         logger.info("Database connection established")
 
+    async def _init_stats_collector(self) -> None:
+        """Initialize and start the stats collector."""
+        from src.stats.collector import StatsCollector
+
+        self.stats_collector = StatsCollector(self.db, flush_interval=60)
+        await self.stats_collector.start()
+        logger.info("Stats collector started")
+
     async def _init_plugins(self) -> None:
         """Initialize plugin registry and load plugins."""
         self.plugin_registry = PluginRegistry()
@@ -142,6 +159,7 @@ class MultibotApplication:
         self.dispatcher_factory = DispatcherFactory(
             plugin_registry=self.plugin_registry,
             db=self.db,
+            stats_collector=self.stats_collector,
         )
 
         self.bot_manager = BotManager(

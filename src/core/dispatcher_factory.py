@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from src.database.connection import DatabaseManager
     from src.plugins.registry import PluginRegistry
+    from src.stats.collector import StatsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +36,11 @@ class DispatcherFactory:
         self,
         plugin_registry: PluginRegistry,
         db: DatabaseManager | None = None,
+        stats_collector: StatsCollector | None = None,
     ):
         self.plugin_registry = plugin_registry
         self.db = db
+        self.stats_collector = stats_collector
 
     async def create_dispatcher(
         self,
@@ -149,6 +152,14 @@ class DispatcherFactory:
         # Add logging middleware
         dispatcher.message.middleware(LoggingMiddleware(bot_id=bot_id))
         dispatcher.callback_query.middleware(LoggingMiddleware(bot_id=bot_id))
+
+        # Add stats middleware if collector is available
+        if self.stats_collector:
+            from src.middleware.stats import StatsMiddleware
+
+            stats_mw = StatsMiddleware(bot_id=bot_id, collector=self.stats_collector)
+            dispatcher.message.middleware(stats_mw)
+            dispatcher.callback_query.middleware(stats_mw)
 
         # Add database middleware if available
         if self.db:
