@@ -335,6 +335,16 @@ print("Hello, World!")
             if len(markdown_text) < 10:
                 return
 
+            # Warn if message might be truncated (close to Telegram's 4096 limit)
+            if len(markdown_text) > 4000:
+                await message.answer(
+                    "⚠️ <b>Long content detected!</b>\n\n"
+                    "Your text is close to Telegram's 4096 character limit. "
+                    "If your document is longer, please send it as a <code>.md</code> file "
+                    "to avoid splitting into multiple PDFs.",
+                    parse_mode="HTML",
+                )
+
             # Check if it looks like markdown (has some markdown syntax)
             markdown_indicators = ['#', '*', '_', '`', '[', '|', '-', '>']
             if not any(indicator in markdown_text for indicator in markdown_indicators):
