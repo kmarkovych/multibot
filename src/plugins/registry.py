@@ -142,12 +142,11 @@ class PluginRegistry:
 
     def discover_plugins(self, *directories: Path | str) -> int:
         """
-        Scan directories for plugin modules.
+        Scan directories for plugin modules and packages.
 
-        A valid plugin module must:
-        1. Be a .py file (not starting with _)
-        2. Contain a class that inherits from BasePlugin
-        3. Have the 'plugin' attribute set to the class
+        A valid plugin can be:
+        1. A .py file (not starting with _) with a BasePlugin subclass
+        2. A directory with __init__.py that exports 'plugin'
 
         Returns the number of plugins discovered.
         """
@@ -162,6 +161,7 @@ class PluginRegistry:
                 logger.warning(f"Plugin directory not found: {path}")
                 continue
 
+            # Discover .py files
             for plugin_file in path.glob("*.py"):
                 if plugin_file.name.startswith("_"):
                     continue
@@ -172,6 +172,22 @@ class PluginRegistry:
                     count += 1
                 except Exception as e:
                     logger.error(f"Failed to load plugin from {plugin_file}: {e}")
+
+            # Discover plugin packages (directories with __init__.py)
+            for subdir in path.iterdir():
+                if not subdir.is_dir():
+                    continue
+                if subdir.name.startswith("_"):
+                    continue
+
+                init_file = subdir / "__init__.py"
+                if init_file.exists():
+                    try:
+                        plugin_class = loader.load_plugin(init_file)
+                        self.register(plugin_class)
+                        count += 1
+                    except Exception as e:
+                        logger.error(f"Failed to load plugin from {subdir}: {e}")
 
         logger.info(f"Discovered {count} plugins from {len(directories)} directories")
         return count
