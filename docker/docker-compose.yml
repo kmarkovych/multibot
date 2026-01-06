@@ -51,8 +51,8 @@ services:
       POSTGRES_DB: multibot
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"  # Remove in production
+    # ports:
+      # - "5432:5432"  # Remove in production
     networks:
       - multibot-network
     healthcheck:
