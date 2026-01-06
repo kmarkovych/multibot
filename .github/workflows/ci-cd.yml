@@ -41,6 +41,7 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
@@ -49,12 +50,12 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          port: ${{ vars.SSH_PORT || 22 }}
           script: |
-            cd ${{ secrets.DEPLOY_PATH }}
+            cd ${{ vars.DEPLOY_PATH }}
             git pull origin main
             cd docker
             docker compose down
@@ -65,10 +66,10 @@ jobs:
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          port: ${{ vars.SSH_PORT || 22 }}
           script: |
             curl -f http://localhost:8080/health/live || exit 1
             echo "Health check passed!"
