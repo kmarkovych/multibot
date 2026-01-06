@@ -92,12 +92,23 @@ class BillingPlugin(BasePlugin):
         """Set the translator function for i18n support."""
         self._translator = translator
 
+    def _get_translator(self) -> TranslatorFunc | None:
+        """Get translator, checking registry if not set (for late registration)."""
+        if self._translator:
+            return self._translator
+        # Check registry in case it was registered after our on_load
+        registered = get_registered_translator(self.bot_id)
+        if registered:
+            self._translator = registered
+        return self._translator
+
     def _translate(
         self, key: str, lang: str | None = None, default: str | None = None, **kwargs: Any
     ) -> str:
         """Translate a key, falling back to default if no translator or key not found."""
-        if self._translator:
-            result = self._translator(key, lang, **kwargs)
+        translator = self._get_translator()
+        if translator:
+            result = translator(key, lang, **kwargs)
             # If translator returns the key itself, it means key wasn't found
             if result != key:
                 return result
@@ -105,16 +116,19 @@ class BillingPlugin(BasePlugin):
 
     def _get_package_label(self, package: TokenPackage, lang: str | None = None) -> str:
         """Get translated package label."""
-        if package.label_key and self._translator:
-            translated = self._translator(package.label_key, lang)
+        translator = self._get_translator()
+        if package.label_key and translator:
+            translated = translator(package.label_key, lang)
             if translated != package.label_key:
                 return translated
-        return package.label
+        # Fallback to label, or generate one from tokens
+        return package.label or f"{package.tokens} Tokens"
 
     def _get_package_description(self, package: TokenPackage, lang: str | None = None) -> str:
         """Get translated package description."""
-        if package.description_key and self._translator:
-            translated = self._translator(package.description_key, lang)
+        translator = self._get_translator()
+        if package.description_key and translator:
+            translated = translator(package.description_key, lang)
             if translated != package.description_key:
                 return translated
         return package.description or f"Get {package.tokens} tokens"
