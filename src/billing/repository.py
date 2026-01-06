@@ -224,6 +224,29 @@ class TransactionRepository(BaseRepository[TokenTransaction]):
         result = await self.session.execute(query)
         return result.scalar() or 0
 
+    async def has_transaction_today(
+        self,
+        telegram_id: int,
+        bot_id: str,
+        reference_id: str,
+    ) -> bool:
+        """Check if user has a consume transaction with this reference_id today."""
+        from datetime import date
+
+        from sqlalchemy import func
+
+        today = date.today()
+        query = select(func.count()).where(
+            TokenTransaction.telegram_id == telegram_id,
+            TokenTransaction.bot_id == bot_id,
+            TokenTransaction.transaction_type == "consume",
+            TokenTransaction.reference_id == reference_id,
+            func.date(TokenTransaction.created_at) == today,
+        )
+        result = await self.session.execute(query)
+        count = result.scalar() or 0
+        return count > 0
+
 
 class TokenRepositoryFactory:
     """Factory to create token repositories from a session."""

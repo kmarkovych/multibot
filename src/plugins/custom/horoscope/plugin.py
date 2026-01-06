@@ -629,22 +629,28 @@ class HoroscopePlugin(BasePlugin):
             await message.answer(t("service_not_ready", lang))
             return
 
-        # Consume tokens if billing is enabled
+        # Consume tokens if billing is enabled (but not if already paid today)
         if token_manager and message.from_user:
-            try:
-                await token_manager.consume(
-                    telegram_id=message.from_user.id,
-                    cost=1,
-                    action="generate_horoscope",
-                )
-            except InsufficientTokensError as e:
-                await message.answer(
-                    t("insufficient_tokens", lang, required=e.required, available=e.available)
-                    if t("insufficient_tokens", lang) != "insufficient_tokens"
-                    else f"⚠️ You need {e.required} token(s) but have {e.available}.\n\n"
-                    f"Use /tokens to check your balance or purchase more.",
-                )
-                return
+            action_key = f"horoscope_{sign.name.lower()}"
+            already_paid = await token_manager.has_paid_today(
+                telegram_id=message.from_user.id,
+                action_key=action_key,
+            )
+            if not already_paid:
+                try:
+                    await token_manager.consume(
+                        telegram_id=message.from_user.id,
+                        cost=1,
+                        action=action_key,
+                    )
+                except InsufficientTokensError as e:
+                    await message.answer(
+                        t("insufficient_tokens", lang, required=e.required, available=e.available)
+                        if t("insufficient_tokens", lang) != "insufficient_tokens"
+                        else f"⚠️ You need {e.required} token(s) but have {e.available}.\n\n"
+                        f"Use /tokens to check your balance or purchase more.",
+                    )
+                    return
 
         try:
             processing = await message.answer(t("generating", lang))
@@ -676,22 +682,28 @@ class HoroscopePlugin(BasePlugin):
             await message.edit_text(t("service_not_ready", lang))
             return
 
-        # Consume tokens if billing is enabled
+        # Consume tokens if billing is enabled (but not if already paid today)
         if token_manager and user_id:
-            try:
-                await token_manager.consume(
-                    telegram_id=user_id,
-                    cost=1,
-                    action="generate_horoscope",
-                )
-            except InsufficientTokensError as e:
-                await message.edit_text(
-                    t("insufficient_tokens", lang, required=e.required, available=e.available)
-                    if t("insufficient_tokens", lang) != "insufficient_tokens"
-                    else f"⚠️ You need {e.required} token(s) but have {e.available}.\n\n"
-                    f"Use /tokens to check your balance or purchase more.",
-                )
-                return
+            action_key = f"horoscope_{sign.name.lower()}"
+            already_paid = await token_manager.has_paid_today(
+                telegram_id=user_id,
+                action_key=action_key,
+            )
+            if not already_paid:
+                try:
+                    await token_manager.consume(
+                        telegram_id=user_id,
+                        cost=1,
+                        action=action_key,
+                    )
+                except InsufficientTokensError as e:
+                    await message.edit_text(
+                        t("insufficient_tokens", lang, required=e.required, available=e.available)
+                        if t("insufficient_tokens", lang) != "insufficient_tokens"
+                        else f"⚠️ You need {e.required} token(s) but have {e.available}.\n\n"
+                        f"Use /tokens to check your balance or purchase more.",
+                    )
+                    return
 
         try:
             horoscope_msg = await self._scheduler.deliver_now(user_id or 0, sign, lang)

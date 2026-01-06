@@ -103,6 +103,25 @@ class TokenManager:
         """Get the cost for a specific action."""
         return self.action_costs.get(action, 0)
 
+    async def has_paid_today(self, telegram_id: int, action_key: str) -> bool:
+        """
+        Check if user has already paid for this specific action today.
+
+        Args:
+            telegram_id: User's Telegram ID
+            action_key: Unique key for the action (e.g., "horoscope_aries")
+
+        Returns:
+            True if user has already paid today, False otherwise
+        """
+        async with self.db.session() as session:
+            tx_repo = TransactionRepository(session)
+            return await tx_repo.has_transaction_today(
+                telegram_id=telegram_id,
+                bot_id=self.bot_id,
+                reference_id=action_key,
+            )
+
     async def consume(
         self,
         telegram_id: int,
