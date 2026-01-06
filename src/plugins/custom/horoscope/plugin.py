@@ -718,7 +718,7 @@ class HoroscopePlugin(BasePlugin):
         current_commands = await bot.get_my_commands(language_code=language_code)
         commands_changed = len(current_commands) != len(commands) or any(
             c1.command != c2.command or c1.description != c2.description
-            for c1, c2 in zip(current_commands, commands)
+            for c1, c2 in zip(current_commands, commands, strict=True)
         )
         if commands_changed:
             await bot.set_my_commands(commands, language_code=language_code)
