@@ -114,7 +114,7 @@ class BotConfig(BaseModel):
     id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     description: str = ""
-    token: str = Field(min_length=1)
+    token: str = ""  # Empty token = bot will be skipped
     enabled: bool = True
     mode: Literal["polling", "webhook"] = "polling"
     webhook: BotWebhookConfig = Field(default_factory=BotWebhookConfig)
@@ -257,21 +257,34 @@ class ConfigManager:
             return self._bot_configs
 
         for config_file in config_dir.glob("*.yaml"):
-            try:
-                bot_config = self.load_bot_config(config_file)
-                self._bot_configs[bot_config.id] = bot_config
-            except Exception as e:
-                # Log error but continue loading other configs
-                print(f"Error loading config {config_file}: {e}")
+            self._load_and_register_bot(config_file)
 
         for config_file in config_dir.glob("*.yml"):
-            try:
-                bot_config = self.load_bot_config(config_file)
-                self._bot_configs[bot_config.id] = bot_config
-            except Exception as e:
-                print(f"Error loading config {config_file}: {e}")
+            self._load_and_register_bot(config_file)
 
         return self._bot_configs
+
+    def _load_and_register_bot(self, config_file: Path) -> None:
+        """Load a bot config and register it if valid."""
+        try:
+            bot_config = self.load_bot_config(config_file)
+
+            # Skip bots with missing tokens
+            if not bot_config.token:
+                print(f"Skipping {config_file.name}: token not configured (set {bot_config.id.upper()}_TOKEN env var)")
+                return
+
+            # Skip disabled bots
+            if not bot_config.enabled:
+                print(f"Skipping {config_file.name}: bot is disabled")
+                return
+
+            self._bot_configs[bot_config.id] = bot_config
+            print(f"Loaded bot config: {bot_config.id} ({bot_config.name})")
+
+        except Exception as e:
+            # Log error but continue loading other configs
+            print(f"Error loading config {config_file}: {e}")
 
     def load_bot_config(self, config_path: Path | str) -> BotConfig:
         """Load a single bot configuration from a YAML file."""
