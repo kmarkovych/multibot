@@ -46,7 +46,11 @@ class PluginLoader:
             raise PluginLoadError(str(plugin_path), "Not a Python file")
 
         # Create a unique module name
-        module_name = f"multibot_plugin_{plugin_path.stem}"
+        # For __init__.py files (packages), use parent directory name
+        if plugin_path.stem == "__init__":
+            module_name = f"multibot_plugin_{plugin_path.parent.name}"
+        else:
+            module_name = f"multibot_plugin_{plugin_path.stem}"
 
         try:
             # Load the module
