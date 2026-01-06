@@ -12,6 +12,8 @@ from src.core.config import BotConfig
 from src.plugins.base import BasePlugin
 
 if TYPE_CHECKING:
+    from aiogram import Bot
+
     from src.database.connection import DatabaseManager
     from src.plugins.registry import PluginRegistry
 
@@ -41,11 +43,9 @@ class DispatcherFactory:
         self,
         config: BotConfig,
         bot_id: str,
-        bot: "Bot | None" = None,
+        bot: Bot | None = None,
     ) -> tuple[Dispatcher, list[BasePlugin]]:
         """Create a fully configured Dispatcher for a bot."""
-        from aiogram import Bot
-
         # Create FSM storage
         # In production, you might want Redis storage
         storage = MemoryStorage()
@@ -73,11 +73,9 @@ class DispatcherFactory:
         router: Router,
         config: BotConfig,
         bot_id: str,
-        bot: "Bot | None" = None,
+        bot: Bot | None = None,
     ) -> list[BasePlugin]:
         """Load and attach plugins to the router."""
-        from aiogram import Bot
-
         if not config.plugins:
             # Use default plugins if none specified
             config.plugins = [

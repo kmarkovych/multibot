@@ -43,7 +43,7 @@ class ManagedBot:
     error_message: str | None = None
     polling_task: asyncio.Task | None = field(default=None, repr=False)
     message_count: int = 0
-    plugins: list["BasePlugin"] = field(default_factory=list, repr=False)
+    plugins: list[BasePlugin] = field(default_factory=list, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
