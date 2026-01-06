@@ -12,6 +12,7 @@ from sqlalchemy import select
 from src.database.models import PluginState
 from src.database.repositories.bot_repository import PluginStateRepository
 
+from .timezone import DEFAULT_TIMEZONE, local_to_utc
 from .zodiac import ZodiacSign
 
 if TYPE_CHECKING:
@@ -28,7 +29,8 @@ class Subscription:
 
     telegram_id: int
     zodiac_sign: ZodiacSign
-    delivery_hour: int  # UTC hour (0-23)
+    delivery_hour: int  # Local hour (0-23)
+    timezone: str  # Timezone ID (e.g., "Europe/Kyiv")
     is_active: bool
     created_at: datetime | None = None
 
@@ -49,6 +51,7 @@ class SubscriptionManager:
         telegram_id: int,
         sign: ZodiacSign,
         delivery_hour: int = 8,
+        timezone: str = DEFAULT_TIMEZONE,
     ) -> Subscription:
         """
         Create or update a subscription.
@@ -56,7 +59,8 @@ class SubscriptionManager:
         Args:
             telegram_id: User's Telegram ID
             sign: User's zodiac sign
-            delivery_hour: Hour to deliver horoscope (UTC, 0-23)
+            delivery_hour: Hour to deliver horoscope (local time, 0-23)
+            timezone: User's timezone ID
 
         Returns:
             The created/updated subscription
@@ -73,6 +77,7 @@ class SubscriptionManager:
                     "telegram_id": telegram_id,
                     "sign": sign.name,
                     "hour": delivery_hour,
+                    "timezone": timezone,
                     "active": True,
                     "created_at": datetime.utcnow().isoformat(),
                 },
@@ -80,13 +85,14 @@ class SubscriptionManager:
             await session.commit()
 
         logger.info(
-            f"User {telegram_id} subscribed: {sign.value} at {delivery_hour}:00 UTC"
+            f"User {telegram_id} subscribed: {sign.value} at {delivery_hour}:00 {timezone}"
         )
 
         return Subscription(
             telegram_id=telegram_id,
             zodiac_sign=sign,
             delivery_hour=delivery_hour,
+            timezone=timezone,
             is_active=True,
             created_at=datetime.utcnow(),
         )
@@ -141,6 +147,7 @@ class SubscriptionManager:
                 telegram_id=state.get("telegram_id", telegram_id),
                 zodiac_sign=sign,
                 delivery_hour=state.get("hour", 8),
+                timezone=state.get("timezone", DEFAULT_TIMEZONE),
                 is_active=state.get("active", True),
                 created_at=datetime.fromisoformat(state["created_at"])
                 if "created_at" in state
@@ -198,7 +205,34 @@ class SubscriptionManager:
             await repo.set_state(self.bot_id, PLUGIN_NAME, sub_key, state)
             await session.commit()
 
-        logger.info(f"User {telegram_id} updated delivery time to {hour}:00 UTC")
+        logger.info(f"User {telegram_id} updated delivery time to {hour}:00")
+        return True
+
+    async def update_timezone(self, telegram_id: int, timezone: str) -> bool:
+        """
+        Update a user's timezone.
+
+        Args:
+            telegram_id: User's Telegram ID
+            timezone: New timezone ID
+
+        Returns:
+            True if updated, False if subscription not found
+        """
+        sub_key = self._sub_key(telegram_id)
+
+        async with self.db.session() as session:
+            repo = PluginStateRepository(session)
+            state = await repo.get_state(self.bot_id, PLUGIN_NAME, sub_key)
+
+            if not state:
+                return False
+
+            state["timezone"] = timezone
+            await repo.set_state(self.bot_id, PLUGIN_NAME, sub_key, state)
+            await session.commit()
+
+        logger.info(f"User {telegram_id} updated timezone to {timezone}")
         return True
 
     async def deactivate(self, telegram_id: int) -> None:
@@ -220,15 +254,18 @@ class SubscriptionManager:
                 await session.commit()
                 logger.info(f"Deactivated subscription for user {telegram_id}")
 
-    async def get_subscriptions_for_hour(self, hour: int) -> list[Subscription]:
+    async def get_subscriptions_for_hour(self, utc_hour: int) -> list[Subscription]:
         """
-        Get all active subscriptions scheduled for a specific hour.
+        Get all active subscriptions scheduled for a specific UTC hour.
+
+        This finds all subscriptions where the user's local delivery time
+        corresponds to the given UTC hour.
 
         Args:
-            hour: UTC hour (0-23)
+            utc_hour: Current UTC hour (0-23)
 
         Returns:
-            List of active subscriptions for that hour
+            List of active subscriptions to deliver at this UTC hour
         """
         subscriptions = []
 
@@ -247,11 +284,16 @@ class SubscriptionManager:
                 if not data:
                     continue
 
-                # Check if active and matches hour
+                # Check if active
                 if not data.get("active", True):
                     continue
 
-                if data.get("hour") != hour:
+                # Get local hour and timezone
+                local_hour = data.get("hour", 8)
+                timezone = data.get("timezone", DEFAULT_TIMEZONE)
+
+                # Check if this subscription's local time matches current UTC
+                if local_to_utc(local_hour, timezone) != utc_hour:
                     continue
 
                 sign = ZodiacSign.from_name(data.get("sign", ""))
@@ -262,7 +304,8 @@ class SubscriptionManager:
                     Subscription(
                         telegram_id=data.get("telegram_id", 0),
                         zodiac_sign=sign,
-                        delivery_hour=hour,
+                        delivery_hour=local_hour,
+                        timezone=timezone,
                         is_active=True,
                         created_at=datetime.fromisoformat(data["created_at"])
                         if "created_at" in data
@@ -270,7 +313,7 @@ class SubscriptionManager:
                     )
                 )
 
-        logger.debug(f"Found {len(subscriptions)} subscriptions for hour {hour}")
+        logger.debug(f"Found {len(subscriptions)} subscriptions for UTC hour {utc_hour}")
         return subscriptions
 
     async def get_all_subscriptions(self) -> list[Subscription]:
@@ -305,6 +348,7 @@ class SubscriptionManager:
                         telegram_id=data.get("telegram_id", 0),
                         zodiac_sign=sign,
                         delivery_hour=data.get("hour", 8),
+                        timezone=data.get("timezone", DEFAULT_TIMEZONE),
                         is_active=True,
                         created_at=datetime.fromisoformat(data["created_at"])
                         if "created_at" in data

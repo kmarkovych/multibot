@@ -49,6 +49,7 @@ Select an option below to get started!""",
         "btn_menu": "« Menu",
         "btn_change_sign": "♈ Change Sign",
         "btn_change_time": "⏰ Change Time",
+        "btn_change_timezone": "🌍 Change Timezone",
         "btn_unsubscribe": "❌ Unsubscribe",
         "btn_subscribe_now": "✅ Subscribe",
         "btn_back": "« Back",
@@ -58,16 +59,18 @@ Select an option below to get started!""",
         "select_sign": "<b>♈ Select Your Zodiac Sign</b>\n\nChoose your sign to get today's horoscope:",
         "select_sign_change": "<b>♈ Change Your Zodiac Sign</b>\n\nSelect your new sign:",
         "subscribe_select_sign": "<b>📅 Subscribe to Daily Horoscope</b>\n\nFirst, select your zodiac sign:",
-        "select_time": "<b>⏰ Select Delivery Time</b>\n\nSign: {sign}\n\nWhen would you like to receive your daily horoscope? (UTC)",
-        "change_time": "<b>⏰ Change Delivery Time</b>\n\nSign: {sign}\n\nSelect your preferred time (UTC):",
+        "select_timezone": "<b>🌍 Select Your Timezone</b>\n\nSign: {sign}\n\nChoose your timezone:",
+        "change_timezone": "<b>🌍 Change Timezone</b>\n\nCurrent: {timezone}\n\nSelect your new timezone:",
+        "select_time": "<b>⏰ Select Delivery Time</b>\n\nSign: {sign}\nTimezone: {timezone}\n\nWhen would you like to receive your daily horoscope?",
+        "change_time": "<b>⏰ Change Delivery Time</b>\n\nSign: {sign}\nTimezone: {timezone}\n\nSelect your preferred time:",
         "subscribed": """<b>✅ Subscribed Successfully!</b>
 
 <b>Sign:</b> {sign}
-<b>Delivery:</b> Daily at {hour}:00 UTC
+<b>Delivery:</b> Daily at {time}
 
 You'll receive your first horoscope at the scheduled time.
 Use /horoscope to get today's horoscope now!""",
-        "unsubscribe_confirm": "<b>❌ Unsubscribe?</b>\n\nYou're currently subscribed to receive {sign} horoscope daily at {hour}:00 UTC.\n\nDo you want to unsubscribe?",
+        "unsubscribe_confirm": "<b>❌ Unsubscribe?</b>\n\nYou're currently subscribed to receive {sign} horoscope daily at {time}.\n\nDo you want to unsubscribe?",
         "unsubscribed": """<b>✅ Unsubscribed</b>
 
 You've been unsubscribed from daily horoscopes.
@@ -75,7 +78,7 @@ You can still use /horoscope to get your horoscope anytime!""",
         "settings_with_sub": """<b>⚙️ Your Settings</b>
 
 <b>Sign:</b> {sign}
-<b>Delivery:</b> Daily at {hour}:00 UTC
+<b>Delivery:</b> Daily at {time}
 <b>Status:</b> ✅ Active""",
         "settings_no_sub": """<b>⚙️ Settings</b>
 
@@ -149,6 +152,7 @@ Subscribe to receive daily horoscopes!""",
         "btn_menu": "« Меню",
         "btn_change_sign": "♈ Змінити знак",
         "btn_change_time": "⏰ Змінити час",
+        "btn_change_timezone": "🌍 Змінити часовий пояс",
         "btn_unsubscribe": "❌ Відписатися",
         "btn_subscribe_now": "✅ Підписатися",
         "btn_back": "« Назад",
@@ -158,16 +162,18 @@ Subscribe to receive daily horoscopes!""",
         "select_sign": "<b>♈ Оберіть ваш знак зодіаку</b>\n\nОберіть знак, щоб отримати гороскоп на сьогодні:",
         "select_sign_change": "<b>♈ Змінити знак зодіаку</b>\n\nОберіть новий знак:",
         "subscribe_select_sign": "<b>📅 Підписка на щоденний гороскоп</b>\n\nСпочатку оберіть ваш знак зодіаку:",
-        "select_time": "<b>⏰ Оберіть час доставки</b>\n\nЗнак: {sign}\n\nКоли ви бажаєте отримувати щоденний гороскоп? (UTC)",
-        "change_time": "<b>⏰ Змінити час доставки</b>\n\nЗнак: {sign}\n\nОберіть бажаний час (UTC):",
+        "select_timezone": "<b>🌍 Оберіть часовий пояс</b>\n\nЗнак: {sign}\n\nОберіть ваш часовий пояс:",
+        "change_timezone": "<b>🌍 Змінити часовий пояс</b>\n\nПоточний: {timezone}\n\nОберіть новий часовий пояс:",
+        "select_time": "<b>⏰ Оберіть час доставки</b>\n\nЗнак: {sign}\nЧасовий пояс: {timezone}\n\nКоли ви бажаєте отримувати щоденний гороскоп?",
+        "change_time": "<b>⏰ Змінити час доставки</b>\n\nЗнак: {sign}\nЧасовий пояс: {timezone}\n\nОберіть бажаний час:",
         "subscribed": """<b>✅ Підписка оформлена!</b>
 
 <b>Знак:</b> {sign}
-<b>Доставка:</b> Щодня о {hour}:00 UTC
+<b>Доставка:</b> Щодня о {time}
 
 Ви отримаєте перший гороскоп у запланований час.
 Використовуйте /horoscope, щоб отримати гороскоп зараз!""",
-        "unsubscribe_confirm": "<b>❌ Відписатися?</b>\n\nВи підписані на гороскоп {sign} щодня о {hour}:00 UTC.\n\nБажаєте відписатися?",
+        "unsubscribe_confirm": "<b>❌ Відписатися?</b>\n\nВи підписані на гороскоп {sign} щодня о {time}.\n\nБажаєте відписатися?",
         "unsubscribed": """<b>✅ Відписано</b>
 
 Ви відписалися від щоденних гороскопів.
@@ -175,7 +181,7 @@ Subscribe to receive daily horoscopes!""",
         "settings_with_sub": """<b>⚙️ Ваші налаштування</b>
 
 <b>Знак:</b> {sign}
-<b>Доставка:</b> Щодня о {hour}:00 UTC
+<b>Доставка:</b> Щодня о {time}
 <b>Статус:</b> ✅ Активна""",
         "settings_no_sub": """<b>⚙️ Налаштування</b>
 
@@ -249,6 +255,7 @@ Selecione uma opção abaixo para começar!""",
         "btn_menu": "« Menu",
         "btn_change_sign": "♈ Mudar Signo",
         "btn_change_time": "⏰ Mudar Horário",
+        "btn_change_timezone": "🌍 Mudar Fuso Horário",
         "btn_unsubscribe": "❌ Cancelar",
         "btn_subscribe_now": "✅ Assinar",
         "btn_back": "« Voltar",
@@ -258,16 +265,18 @@ Selecione uma opção abaixo para começar!""",
         "select_sign": "<b>♈ Selecione Seu Signo</b>\n\nEscolha seu signo para ver o horóscopo de hoje:",
         "select_sign_change": "<b>♈ Mudar Seu Signo</b>\n\nSelecione seu novo signo:",
         "subscribe_select_sign": "<b>📅 Assinar Horóscopo Diário</b>\n\nPrimeiro, selecione seu signo:",
-        "select_time": "<b>⏰ Selecione o Horário de Entrega</b>\n\nSigno: {sign}\n\nQuando você gostaria de receber seu horóscopo diário? (UTC)",
-        "change_time": "<b>⏰ Mudar Horário de Entrega</b>\n\nSigno: {sign}\n\nSelecione seu horário preferido (UTC):",
+        "select_timezone": "<b>🌍 Selecione Seu Fuso Horário</b>\n\nSigno: {sign}\n\nEscolha seu fuso horário:",
+        "change_timezone": "<b>🌍 Mudar Fuso Horário</b>\n\nAtual: {timezone}\n\nSelecione seu novo fuso horário:",
+        "select_time": "<b>⏰ Selecione o Horário de Entrega</b>\n\nSigno: {sign}\nFuso horário: {timezone}\n\nQuando você gostaria de receber seu horóscopo diário?",
+        "change_time": "<b>⏰ Mudar Horário de Entrega</b>\n\nSigno: {sign}\nFuso horário: {timezone}\n\nSelecione seu horário preferido:",
         "subscribed": """<b>✅ Assinatura Confirmada!</b>
 
 <b>Signo:</b> {sign}
-<b>Entrega:</b> Diariamente às {hour}:00 UTC
+<b>Entrega:</b> Diariamente às {time}
 
 Você receberá seu primeiro horóscopo no horário agendado.
 Use /horoscope para ver o horóscopo de hoje agora!""",
-        "unsubscribe_confirm": "<b>❌ Cancelar Assinatura?</b>\n\nVocê está assinando o horóscopo de {sign} diariamente às {hour}:00 UTC.\n\nDeseja cancelar?",
+        "unsubscribe_confirm": "<b>❌ Cancelar Assinatura?</b>\n\nVocê está assinando o horóscopo de {sign} diariamente às {time}.\n\nDeseja cancelar?",
         "unsubscribed": """<b>✅ Assinatura Cancelada</b>
 
 Você cancelou a assinatura de horóscopos diários.
@@ -275,7 +284,7 @@ Você ainda pode usar /horoscope para ver seu horóscopo a qualquer momento!""",
         "settings_with_sub": """<b>⚙️ Suas Configurações</b>
 
 <b>Signo:</b> {sign}
-<b>Entrega:</b> Diariamente às {hour}:00 UTC
+<b>Entrega:</b> Diariamente às {time}
 <b>Status:</b> ✅ Ativo""",
         "settings_no_sub": """<b>⚙️ Configurações</b>
 
@@ -349,6 +358,7 @@ Assine para receber horóscopos diários!""",
         "btn_menu": "« Мәзір",
         "btn_change_sign": "♈ Белгіні өзгерту",
         "btn_change_time": "⏰ Уақытты өзгерту",
+        "btn_change_timezone": "🌍 Уақыт белдеуін өзгерту",
         "btn_unsubscribe": "❌ Бас тарту",
         "btn_subscribe_now": "✅ Жазылу",
         "btn_back": "« Артқа",
@@ -358,16 +368,18 @@ Assine para receber horóscopos diários!""",
         "select_sign": "<b>♈ Зодиак белгіңізді таңдаңыз</b>\n\nБүгінгі жұлдызнаманы алу үшін белгіңізді таңдаңыз:",
         "select_sign_change": "<b>♈ Зодиак белгіңізді өзгертіңіз</b>\n\nЖаңа белгіңізді таңдаңыз:",
         "subscribe_select_sign": "<b>📅 Күнделікті жұлдызнамаға жазылу</b>\n\nАлдымен зодиак белгіңізді таңдаңыз:",
-        "select_time": "<b>⏰ Жеткізу уақытын таңдаңыз</b>\n\nБелгі: {sign}\n\nКүнделікті жұлдызнамаңызды қашан алғыңыз келеді? (UTC)",
-        "change_time": "<b>⏰ Жеткізу уақытын өзгерту</b>\n\nБелгі: {sign}\n\nҚалаған уақытты таңдаңыз (UTC):",
+        "select_timezone": "<b>🌍 Уақыт белдеуін таңдаңыз</b>\n\nБелгі: {sign}\n\nУақыт белдеуіңізді таңдаңыз:",
+        "change_timezone": "<b>🌍 Уақыт белдеуін өзгерту</b>\n\nҚазіргі: {timezone}\n\nЖаңа уақыт белдеуін таңдаңыз:",
+        "select_time": "<b>⏰ Жеткізу уақытын таңдаңыз</b>\n\nБелгі: {sign}\nУақыт белдеуі: {timezone}\n\nКүнделікті жұлдызнамаңызды қашан алғыңыз келеді?",
+        "change_time": "<b>⏰ Жеткізу уақытын өзгерту</b>\n\nБелгі: {sign}\nУақыт белдеуі: {timezone}\n\nҚалаған уақытты таңдаңыз:",
         "subscribed": """<b>✅ Сәтті жазылдыңыз!</b>
 
 <b>Белгі:</b> {sign}
-<b>Жеткізу:</b> Күн сайын {hour}:00 UTC
+<b>Жеткізу:</b> Күн сайын {time}
 
 Сіз бірінші жұлдызнаманы жоспарланған уақытта аласыз.
 Бүгінгі жұлдызнаманы қазір алу үшін /horoscope пайдаланыңыз!""",
-        "unsubscribe_confirm": "<b>❌ Жазылымнан бас тартасыз ба?</b>\n\nСіз қазір {sign} жұлдызнамасын күн сайын {hour}:00 UTC-де алып жатырсыз.\n\nБас тартқыңыз келе ме?",
+        "unsubscribe_confirm": "<b>❌ Жазылымнан бас тартасыз ба?</b>\n\nСіз қазір {sign} жұлдызнамасын күн сайын {time}-де алып жатырсыз.\n\nБас тартқыңыз келе ме?",
         "unsubscribed": """<b>✅ Жазылымнан бас тартылды</b>
 
 Сіз күнделікті жұлдызнамалардан бас тарттыңыз.
@@ -375,7 +387,7 @@ Assine para receber horóscopos diários!""",
         "settings_with_sub": """<b>⚙️ Сіздің параметрлеріңіз</b>
 
 <b>Белгі:</b> {sign}
-<b>Жеткізу:</b> Күн сайын {hour}:00 UTC
+<b>Жеткізу:</b> Күн сайын {time}
 <b>Күй:</b> ✅ Белсенді""",
         "settings_no_sub": """<b>⚙️ Параметрлер</b>
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .i18n import t
+from .timezone import get_timezone_list
 from .zodiac import ZodiacSign
 
 
@@ -55,6 +56,30 @@ def get_time_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
+def get_timezone_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
+    """Create keyboard for selecting timezone."""
+    timezones = get_timezone_list()
+    rows = []
+
+    # Group timezones in rows of 2
+    for i in range(0, len(timezones), 2):
+        row = []
+        for tz in timezones[i : i + 2]:
+            row.append(
+                InlineKeyboardButton(
+                    text=tz.display_name,
+                    callback_data=f"tz_{tz.timezone_id}",
+                )
+            )
+        rows.append(row)
+
+    rows.append([
+        InlineKeyboardButton(text=t("btn_cancel", lang), callback_data="sub_cancel"),
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 def get_settings_keyboard(has_subscription: bool, lang: str | None = None) -> InlineKeyboardMarkup:
     """Create settings menu keyboard."""
     buttons = [
@@ -71,6 +96,12 @@ def get_settings_keyboard(has_subscription: bool, lang: str | None = None) -> In
             InlineKeyboardButton(
                 text=t("btn_change_time", lang),
                 callback_data="settings_time",
+            ),
+        ])
+        buttons.append([
+            InlineKeyboardButton(
+                text=t("btn_change_timezone", lang),
+                callback_data="settings_timezone",
             ),
         ])
         buttons.append([

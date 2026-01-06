@@ -19,11 +19,13 @@ from .keyboards import (
     get_main_menu_keyboard,
     get_settings_keyboard,
     get_time_keyboard,
+    get_timezone_keyboard,
     get_zodiac_keyboard,
 )
 from .openai_client import HoroscopeGenerationError, OpenAIClient
 from .scheduler import HoroscopeScheduler
 from .subscription import SubscriptionManager
+from .timezone import DEFAULT_TIMEZONE, format_local_time, get_timezone_display
 from .zodiac import ZodiacSign
 
 if TYPE_CHECKING:
@@ -119,7 +121,7 @@ class HoroscopePlugin(BasePlugin):
                     "unsubscribe_confirm",
                     lang,
                     sign=sub.zodiac_sign.format_display(),
-                    hour=f"{sub.delivery_hour:02d}",
+                    time=format_local_time(sub.delivery_hour, sub.timezone),
                 ),
                 reply_markup=get_confirm_keyboard("unsubscribe", lang),
                 parse_mode="HTML",
@@ -139,7 +141,7 @@ class HoroscopePlugin(BasePlugin):
                     "settings_with_sub",
                     lang,
                     sign=sub.zodiac_sign.format_display(),
-                    hour=f"{sub.delivery_hour:02d}",
+                    time=format_local_time(sub.delivery_hour, sub.timezone),
                 )
             else:
                 text = t("settings_no_sub", lang)
@@ -205,7 +207,7 @@ class HoroscopePlugin(BasePlugin):
                     "settings_with_sub",
                     lang,
                     sign=sub.zodiac_sign.format_display(),
-                    hour=f"{sub.delivery_hour:02d}",
+                    time=format_local_time(sub.delivery_hour, sub.timezone),
                 )
             else:
                 text = t("settings_no_sub", lang)
@@ -233,20 +235,86 @@ class HoroscopePlugin(BasePlugin):
             # Check context - are we subscribing or just getting horoscope?
             msg_text = callback.message.text or ""
 
-            if "Subscribe" in msg_text or "Підписка" in msg_text:
-                # User is subscribing - ask for time
+            # Check for subscription keywords in multiple languages
+            subscription_keywords = ["Subscribe", "Підписка", "Assinar", "Жазылу"]
+            is_subscribing = any(kw in msg_text for kw in subscription_keywords)
+
+            if is_subscribing:
+                # User is subscribing - ask for timezone first
                 await callback.message.edit_text(
-                    t("select_time", lang, sign=sign.format_display()),
-                    reply_markup=get_time_keyboard(lang),
+                    t("select_timezone", lang, sign=sign.format_display()),
+                    reply_markup=get_timezone_keyboard(lang),
                     parse_mode="HTML",
                 )
-                callback.message._sign_choice = sign.name  # noqa: SLF001
             else:
                 # Just getting horoscope
                 await callback.message.edit_text(t("generating", lang))
                 await self._send_horoscope_edit(callback.message, sign, lang)
 
-        # Time selection for subscription
+        # Timezone selection for subscription or settings
+        @router.callback_query(F.data.startswith("tz_"))
+        async def cb_timezone_select(callback: CallbackQuery) -> None:
+            """Handle timezone selection."""
+            lang = callback.from_user.language_code if callback.from_user else None
+            timezone_id = callback.data.replace("tz_", "")
+
+            msg_text = callback.message.text or ""
+
+            # Check if this is a settings timezone change
+            change_tz_keywords = ["Change Timezone", "Змінити часовий пояс", "Mudar Fuso", "Уақыт белдеуін өзгерту"]
+            is_settings_change = any(kw in msg_text for kw in change_tz_keywords)
+
+            if is_settings_change:
+                # Update timezone in subscription
+                if not self._subscriptions:
+                    await callback.answer(t("service_not_ready", lang), show_alert=True)
+                    return
+
+                await self._subscriptions.update_timezone(callback.from_user.id, timezone_id)
+                await callback.answer()
+
+                # Show updated settings
+                sub = await self._subscriptions.get_subscription(callback.from_user.id)
+                if sub:
+                    text = t(
+                        "settings_with_sub",
+                        lang,
+                        sign=sub.zodiac_sign.format_display(),
+                        time=format_local_time(sub.delivery_hour, sub.timezone),
+                    )
+                    await callback.message.edit_text(
+                        text,
+                        reply_markup=get_settings_keyboard(True, lang),
+                        parse_mode="HTML",
+                    )
+            else:
+                # This is subscription flow - get sign from message
+                sign = None
+
+                for s in ZodiacSign:
+                    if s.value in msg_text:
+                        sign = s
+                        break
+
+                if not sign:
+                    await callback.answer(t("select_sign_first", lang), show_alert=True)
+                    return
+
+                await callback.answer()
+
+                # Show time selection with timezone info
+                await callback.message.edit_text(
+                    t(
+                        "select_time",
+                        lang,
+                        sign=sign.format_display(),
+                        timezone=get_timezone_display(timezone_id),
+                    ),
+                    reply_markup=get_time_keyboard(lang),
+                    parse_mode="HTML",
+                )
+
+        # Time selection for subscription or settings
         @router.callback_query(F.data.startswith("subtime_"))
         async def cb_time_select(callback: CallbackQuery) -> None:
             """Handle delivery time selection."""
@@ -257,33 +325,79 @@ class HoroscopePlugin(BasePlugin):
                 await callback.answer(t("service_not_ready", lang), show_alert=True)
                 return
 
-            # Get sign from message context (look at the message text)
             msg_text = callback.message.text or ""
-            sign = None
 
-            for s in ZodiacSign:
-                if s.value in msg_text:
-                    sign = s
-                    break
+            # Check if this is a settings time change
+            change_time_keywords = ["Change Delivery Time", "Змінити час доставки", "Mudar Horário", "Жеткізу уақытын өзгерту"]
+            is_settings_change = any(kw in msg_text for kw in change_time_keywords)
 
-            if not sign:
-                await callback.answer(t("select_sign_first", lang), show_alert=True)
-                return
+            if is_settings_change:
+                # Update time in existing subscription
+                await self._subscriptions.update_time(callback.from_user.id, hour)
+                await callback.answer()
 
-            await callback.answer()
+                # Show updated settings
+                sub = await self._subscriptions.get_subscription(callback.from_user.id)
+                if sub:
+                    text = t(
+                        "settings_with_sub",
+                        lang,
+                        sign=sub.zodiac_sign.format_display(),
+                        time=format_local_time(sub.delivery_hour, sub.timezone),
+                    )
+                    await callback.message.edit_text(
+                        text,
+                        reply_markup=get_settings_keyboard(True, lang),
+                        parse_mode="HTML",
+                    )
+            else:
+                # New subscription - get sign and timezone from message context
+                sign = None
+                timezone = DEFAULT_TIMEZONE
 
-            # Create subscription
-            await self._subscriptions.subscribe(
-                telegram_id=callback.from_user.id,
-                sign=sign,
-                delivery_hour=hour,
-            )
+                for s in ZodiacSign:
+                    if s.value in msg_text:
+                        sign = s
+                        break
 
-            await callback.message.edit_text(
-                t("subscribed", lang, sign=sign.format_display(), hour=f"{hour:02d}"),
-                reply_markup=get_main_menu_keyboard(lang),
-                parse_mode="HTML",
-            )
+                if not sign:
+                    await callback.answer(t("select_sign_first", lang), show_alert=True)
+                    return
+
+                # Extract timezone from message (format: "Timezone: City (GMT+X)")
+                import re
+
+                tz_match = re.search(r"(?:Timezone|Часовий пояс|Fuso horário|Уақыт белдеуі):\s*([^\n]+)", msg_text)
+                if tz_match:
+                    tz_display = tz_match.group(1).strip()
+                    # Find timezone ID from display name
+                    from .timezone import TIMEZONES
+
+                    for name, tz_id, _ in TIMEZONES:
+                        if name == tz_display:
+                            timezone = tz_id
+                            break
+
+                await callback.answer()
+
+                # Create subscription with timezone
+                await self._subscriptions.subscribe(
+                    telegram_id=callback.from_user.id,
+                    sign=sign,
+                    delivery_hour=hour,
+                    timezone=timezone,
+                )
+
+                await callback.message.edit_text(
+                    t(
+                        "subscribed",
+                        lang,
+                        sign=sign.format_display(),
+                        time=format_local_time(hour, timezone),
+                    ),
+                    reply_markup=get_main_menu_keyboard(lang),
+                    parse_mode="HTML",
+                )
 
         @router.callback_query(F.data == "sub_cancel")
         async def cb_sub_cancel(callback: CallbackQuery) -> None:
@@ -313,7 +427,7 @@ class HoroscopePlugin(BasePlugin):
                 await callback.answer(t("service_not_ready", lang), show_alert=True)
                 return
 
-            # Get existing subscription to show current sign
+            # Get existing subscription to show current sign and timezone
             sub = await self._subscriptions.get_subscription(callback.from_user.id)
             if not sub:
                 await callback.answer(t("no_subscription", lang), show_alert=True)
@@ -321,8 +435,34 @@ class HoroscopePlugin(BasePlugin):
 
             await callback.answer()
             await callback.message.edit_text(
-                t("change_time", lang, sign=sub.zodiac_sign.format_display()),
+                t(
+                    "change_time",
+                    lang,
+                    sign=sub.zodiac_sign.format_display(),
+                    timezone=get_timezone_display(sub.timezone),
+                ),
                 reply_markup=get_time_keyboard(lang),
+                parse_mode="HTML",
+            )
+
+        @router.callback_query(F.data == "settings_timezone")
+        async def cb_settings_timezone(callback: CallbackQuery) -> None:
+            """Change timezone."""
+            lang = callback.from_user.language_code if callback.from_user else None
+
+            if not self._subscriptions:
+                await callback.answer(t("service_not_ready", lang), show_alert=True)
+                return
+
+            sub = await self._subscriptions.get_subscription(callback.from_user.id)
+            if not sub:
+                await callback.answer(t("no_subscription", lang), show_alert=True)
+                return
+
+            await callback.answer()
+            await callback.message.edit_text(
+                t("change_timezone", lang, timezone=get_timezone_display(sub.timezone)),
+                reply_markup=get_timezone_keyboard(lang),
                 parse_mode="HTML",
             )
 
@@ -341,9 +481,24 @@ class HoroscopePlugin(BasePlugin):
         async def cb_settings_unsub(callback: CallbackQuery) -> None:
             """Unsubscribe from settings."""
             lang = callback.from_user.language_code if callback.from_user else None
+
+            if not self._subscriptions:
+                await callback.answer(t("service_not_ready", lang), show_alert=True)
+                return
+
+            sub = await self._subscriptions.get_subscription(callback.from_user.id)
+            if not sub:
+                await callback.answer(t("no_subscription", lang), show_alert=True)
+                return
+
             await callback.answer()
             await callback.message.edit_text(
-                t("unsubscribe_confirm", lang, sign="", hour=""),
+                t(
+                    "unsubscribe_confirm",
+                    lang,
+                    sign=sub.zodiac_sign.format_display(),
+                    time=format_local_time(sub.delivery_hour, sub.timezone),
+                ),
                 reply_markup=get_confirm_keyboard("unsubscribe", lang),
                 parse_mode="HTML",
             )
