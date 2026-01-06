@@ -113,8 +113,11 @@ Subscribe to receive daily horoscopes!""",
         # Horoscope footer
         "have_wonderful_day": "Have a wonderful day! ✨",
         # Token welcome messages
-        "welcome_free_tokens": "🎁 You received <b>{tokens} free tokens</b> to get started!\nUse /tokens to check your balance.",
-        "welcome_token_balance": "💰 Your balance: <b>{balance}</b> tokens\nUse /tokens to purchase more.",
+        "welcome_free_tokens": "🎁 You received <b>{tokens} free tokens</b> to get started!",
+        "welcome_token_balance": "💰 Your balance: <b>{balance}</b> tokens",
+        # Subscription status in welcome
+        "welcome_subscription_active": "📅 Subscription: <b>{sign}</b> daily at {time}",
+        "welcome_no_subscription": "📅 No active subscription. Use /subscribe to get daily horoscopes!",
         # Billing
         "billing_balance_title": "Your Token Balance",
         "billing_balance": "Balance: <b>{balance}</b> tokens",
@@ -242,8 +245,11 @@ Subscribe to receive daily horoscopes!""",
         # Horoscope footer
         "have_wonderful_day": "Гарного дня! ✨",
         # Token welcome messages
-        "welcome_free_tokens": "🎁 Ви отримали <b>{tokens} безкоштовних токенів</b> для початку!\nВикористовуйте /tokens, щоб перевірити баланс.",
-        "welcome_token_balance": "💰 Ваш баланс: <b>{balance}</b> токенів\nВикористовуйте /tokens, щоб придбати більше.",
+        "welcome_free_tokens": "🎁 Ви отримали <b>{tokens} безкоштовних токенів</b> для початку!",
+        "welcome_token_balance": "💰 Ваш баланс: <b>{balance}</b> токенів",
+        # Subscription status in welcome
+        "welcome_subscription_active": "📅 Підписка: <b>{sign}</b> щодня о {time}",
+        "welcome_no_subscription": "📅 Немає активної підписки. Використовуйте /subscribe для щоденних гороскопів!",
         # Billing
         "billing_balance_title": "Ваш баланс токенів",
         "billing_balance": "Баланс: <b>{balance}</b> токенів",
@@ -371,8 +377,11 @@ Assine para receber horóscopos diários!""",
         # Horoscope footer
         "have_wonderful_day": "Tenha um dia maravilhoso! ✨",
         # Token welcome messages
-        "welcome_free_tokens": "🎁 Você recebeu <b>{tokens} tokens grátis</b> para começar!\nUse /tokens para verificar seu saldo.",
-        "welcome_token_balance": "💰 Seu saldo: <b>{balance}</b> tokens\nUse /tokens para comprar mais.",
+        "welcome_free_tokens": "🎁 Você recebeu <b>{tokens} tokens grátis</b> para começar!",
+        "welcome_token_balance": "💰 Seu saldo: <b>{balance}</b> tokens",
+        # Subscription status in welcome
+        "welcome_subscription_active": "📅 Assinatura: <b>{sign}</b> diariamente às {time}",
+        "welcome_no_subscription": "📅 Sem assinatura ativa. Use /subscribe para receber horóscopos diários!",
         # Billing
         "billing_balance_title": "Seu Saldo de Tokens",
         "billing_balance": "Saldo: <b>{balance}</b> tokens",
@@ -500,8 +509,11 @@ Assine para receber horóscopos diários!""",
         # Horoscope footer
         "have_wonderful_day": "Күніңіз жарқын болсын! ✨",
         # Token welcome messages
-        "welcome_free_tokens": "🎁 Сіз бастау үшін <b>{tokens} тегін токен</b> алдыңыз!\nБалансыңызды тексеру үшін /tokens пайдаланыңыз.",
-        "welcome_token_balance": "💰 Сіздің балансыңыз: <b>{balance}</b> токен\nКөбірек сатып алу үшін /tokens пайдаланыңыз.",
+        "welcome_free_tokens": "🎁 Сіз бастау үшін <b>{tokens} тегін токен</b> алдыңыз!",
+        "welcome_token_balance": "💰 Сіздің балансыңыз: <b>{balance}</b> токен",
+        # Subscription status in welcome
+        "welcome_subscription_active": "📅 Жазылым: <b>{sign}</b> күн сайын {time}",
+        "welcome_no_subscription": "📅 Белсенді жазылым жоқ. Күнделікті жұлдызнамалар алу үшін /subscribe пайдаланыңыз!",
         # Billing
         "billing_balance_title": "Сіздің токен балансыңыз",
         "billing_balance": "Баланс: <b>{balance}</b> токен",

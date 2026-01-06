@@ -72,13 +72,31 @@ class HoroscopePlugin(BasePlugin):
             lang = message.from_user.language_code if message.from_user else None
             welcome = self.get_config("welcome_message", None) or t("welcome", lang)
 
-            # Add token info to welcome message
-            if is_new_token_user and token_balance > 0:
-                token_info = t("welcome_free_tokens", lang, tokens=token_balance)
-            else:
-                token_info = t("welcome_token_balance", lang, balance=token_balance)
+            # Build status lines
+            status_lines = []
 
-            full_message = f"{welcome.strip()}\n\n{token_info}"
+            # Token info
+            if is_new_token_user and token_balance > 0:
+                status_lines.append(t("welcome_free_tokens", lang, tokens=token_balance))
+            else:
+                status_lines.append(t("welcome_token_balance", lang, balance=token_balance))
+
+            # Subscription status
+            if self._subscriptions and message.from_user:
+                sub = await self._subscriptions.get_subscription(message.from_user.id)
+                if sub:
+                    status_lines.append(
+                        t(
+                            "welcome_subscription_active",
+                            lang,
+                            sign=sub.zodiac_sign.format_display(),
+                            time=format_local_time(sub.delivery_hour, sub.timezone),
+                        )
+                    )
+                else:
+                    status_lines.append(t("welcome_no_subscription", lang))
+
+            full_message = f"{welcome.strip()}\n\n" + "\n".join(status_lines)
 
             await message.answer(
                 full_message,
