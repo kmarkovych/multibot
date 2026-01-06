@@ -11,37 +11,13 @@ services:
       - "8080:8080"   # Health checks
       - "8443:8443"   # Webhooks (optional)
     environment:
-      # Database
-      DATABASE_URL: postgresql://multibot:${DB_PASSWORD:-multibot}@postgres:5432/multibot
-      DATABASE_POOL_SIZE: 10
-
-      # Admin bot
-      ADMIN_BOT_TOKEN: ${ADMIN_BOT_TOKEN:-}
-      ADMIN_ALLOWED_USERS: ${ADMIN_ALLOWED_USERS:-}
-
-      # Bot tokens (add as needed)
-      BOT_MD2PDF_TOKEN: ${BOT_MD2PDF_TOKEN:-}
-
-      # Health checks
-      HEALTH_CHECK_ENABLED: "true"
-      HEALTH_CHECK_HOST: 0.0.0.0
-      HEALTH_CHECK_PORT: 8080
-
-      # Webhook (if using)
-      WEBHOOK_ENABLED: ${WEBHOOK_ENABLED:-false}
-      WEBHOOK_BASE_URL: ${WEBHOOK_BASE_URL:-}
-      WEBHOOK_HOST: 0.0.0.0
-      WEBHOOK_PORT: 8443
-      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
-
-      # Logging
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      LOG_FORMAT: json
-
-      # Hot reload
-      ENABLE_HOT_RELOAD: "true"
+      # Override paths for container environment
       CONFIG_DIR: /app/config/bots
       PLUGINS_DIR: /app/src/plugins/custom
+      HEALTH_CHECK_HOST: 0.0.0.0
+      WEBHOOK_HOST: 0.0.0.0
+      # Database URL for container network
+      DATABASE_URL: postgresql://multibot:${DB_PASSWORD:-multibot}@postgres:5432/multibot
     volumes:
       # Bot configurations (hot-reloadable)
       - ../config/bots:/app/config/bots:ro
@@ -67,6 +43,8 @@ services:
     image: postgres:15-alpine
     container_name: multibot-postgres
     restart: unless-stopped
+    env_file:
+      - ../.env
     environment:
       POSTGRES_USER: multibot
       POSTGRES_PASSWORD: ${DB_PASSWORD:-multibot}
