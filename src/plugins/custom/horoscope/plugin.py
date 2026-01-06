@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import BotCommand, CallbackQuery, Message
 
 from src.plugins.base import BasePlugin
 
@@ -509,6 +509,18 @@ Select an option below to get started!
 
         # Start scheduler
         await self._scheduler.start()
+
+        # Set bot commands menu
+        commands = [
+            BotCommand(command="start", description="Main menu"),
+            BotCommand(command="horoscope", description="Get today's horoscope"),
+            BotCommand(command="subscribe", description="Subscribe to daily delivery"),
+            BotCommand(command="unsubscribe", description="Cancel subscription"),
+            BotCommand(command="settings", description="View settings"),
+            BotCommand(command="help", description="Show help"),
+        ]
+        await bot.set_my_commands(commands)
+
         logger.info("Horoscope plugin loaded and scheduler started")
 
     async def on_unload(self, bot: Bot) -> None:
@@ -518,5 +530,8 @@ Select an option below to get started!
 
         if self._openai:
             await self._openai.close()
+
+        # Clear bot commands menu
+        await bot.delete_my_commands()
 
         logger.info("Horoscope plugin unloaded")
