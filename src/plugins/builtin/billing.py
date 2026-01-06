@@ -293,6 +293,17 @@ class BillingPlugin(BasePlugin):
                 ]
             )
 
+            # Add back button to return to main menu
+            back_text = self._translate("billing_back", lang, default="Back")
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"« {back_text}",
+                        callback_data="horoscope_menu",
+                    )
+                ]
+            )
+
             keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
             title = self._translate(
