@@ -483,7 +483,7 @@ class HoroscopePlugin(BasePlugin):
         # Start scheduler
         await self._scheduler.start()
 
-        # Set bot commands, description, and short description for each language
+        # Set bot name, commands, description for each language
         for lang in SUPPORTED_LANGUAGES:
             commands = [
                 BotCommand(command="start", description=t("cmd_start", lang)),
@@ -493,6 +493,7 @@ class HoroscopePlugin(BasePlugin):
                 BotCommand(command="settings", description=t("cmd_settings", lang)),
                 BotCommand(command="help", description=t("cmd_help", lang)),
             ]
+            await bot.set_my_name(t("bot_name", lang), language_code=lang)
             await bot.set_my_commands(commands, language_code=lang)
             await bot.set_my_description(t("bot_description", lang), language_code=lang)
             await bot.set_my_short_description(
@@ -508,6 +509,7 @@ class HoroscopePlugin(BasePlugin):
             BotCommand(command="settings", description=t("cmd_settings", "en")),
             BotCommand(command="help", description=t("cmd_help", "en")),
         ]
+        await bot.set_my_name(t("bot_name", "en"))
         await bot.set_my_commands(default_commands)
         await bot.set_my_description(t("bot_description", "en"))
         await bot.set_my_short_description(t("bot_short_description", "en"))

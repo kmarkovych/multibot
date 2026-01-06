@@ -12,6 +12,7 @@ DEFAULT_LANGUAGE = "en"
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         # Bot info
+        "bot_name": "Markdown to PDF",
         "bot_description": """Convert Markdown to beautifully formatted PDF documents!
 
 Features:
@@ -102,6 +103,7 @@ Send me your Markdown content:
     },
     "uk": {
         # Bot info
+        "bot_name": "Markdown у PDF",
         "bot_description": """Конвертуйте Markdown у гарно оформлені PDF документи!
 
 Можливості:
@@ -192,6 +194,7 @@ print("Привіт, Світе!")
     },
     "pt": {
         # Bot info
+        "bot_name": "Markdown para PDF",
         "bot_description": """Converta Markdown em documentos PDF lindamente formatados!
 
 Recursos:
@@ -282,6 +285,7 @@ Envie-me seu conteudo Markdown:
     },
     "kk": {
         # Bot info
+        "bot_name": "Markdown-тан PDF",
         "bot_description": """Markdown-ты әдемі форматталған PDF құжаттарына айналдырыңыз!
 
 Мүмкіндіктер:

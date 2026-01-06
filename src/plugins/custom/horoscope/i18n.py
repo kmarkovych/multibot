@@ -12,6 +12,7 @@ DEFAULT_LANGUAGE = "en"
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         # Bot info
+        "bot_name": "Horoscope Bot",
         "bot_description": """✨ Your Personal AI Horoscope Bot ✨
 
 Get daily horoscopes powered by artificial intelligence!
@@ -111,6 +112,7 @@ Subscribe to receive daily horoscopes!""",
     },
     "uk": {
         # Bot info
+        "bot_name": "Бот Гороскопів",
         "bot_description": """✨ Ваш Особистий AI Бот Гороскопів ✨
 
 Отримуйте щоденні гороскопи на основі штучного інтелекту!
@@ -210,6 +212,7 @@ Subscribe to receive daily horoscopes!""",
     },
     "pt": {
         # Bot info
+        "bot_name": "Bot de Horoscopo",
         "bot_description": """✨ Seu Bot Pessoal de Horóscopo com IA ✨
 
 Receba horóscopos diários gerados por inteligência artificial!
@@ -309,6 +312,7 @@ Assine para receber horóscopos diários!""",
     },
     "kk": {
         # Bot info
+        "bot_name": "Жұлдызнама Боты",
         "bot_description": """✨ Сіздің Жеке AI Жұлдызнама Ботыңыз ✨
 
 Жасанды интеллект негізінде күнделікті жұлдызнамалар алыңыз!
