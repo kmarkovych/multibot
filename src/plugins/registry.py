@@ -128,6 +128,7 @@ class PluginRegistry:
             return
 
         from src.admin.plugin import AdminPlugin
+        from src.plugins.builtin.billing import BillingPlugin
         from src.plugins.builtin.error_handler import ErrorHandlerPlugin
         from src.plugins.builtin.help import HelpPlugin
         from src.plugins.builtin.start import StartPlugin
@@ -136,6 +137,7 @@ class PluginRegistry:
         self.register(HelpPlugin)
         self.register(ErrorHandlerPlugin)
         self.register(AdminPlugin)
+        self.register(BillingPlugin)
 
         self._builtin_loaded = True
         logger.info(f"Loaded {len(self._plugin_classes)} built-in plugins")
