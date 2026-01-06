@@ -77,5 +77,10 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ vars.SSH_PORT || 22 }}
           script: |
-            curl -f http://localhost:8080/health/live || exit 1
+            cd ${{ vars.DEPLOY_PATH }}/docker
+            if ! curl -f http://localhost:8080/health/live; then
+              echo "Health check failed! Container logs:"
+              docker compose logs multibot --tail=100
+              exit 1
+            fi
             echo "Health check passed!"
