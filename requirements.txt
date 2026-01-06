@@ -21,6 +21,12 @@ watchfiles>=0.21.0
 # Logging
 structlog>=24.1.0
 
+# OpenAI API (Horoscope plugin)
+openai>=1.0.0
+
+# Task Scheduling (Horoscope plugin)
+apscheduler>=3.10.0
+
 # Markdown to PDF conversion
 markdown>=3.5.0
 weasyprint>=60.0

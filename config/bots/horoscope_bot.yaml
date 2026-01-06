@@ -1,0 +1,52 @@
+# Horoscope Bot Configuration
+
+id: "horoscope_bot"
+name: "Daily Horoscope"
+description: "AI-powered daily horoscope with subscription delivery"
+enabled: true
+
+# Bot token from environment variable
+token: "${BOT_HOROSCOPE_TOKEN}"
+
+# Operating mode
+mode: "polling"
+
+# Bot settings
+settings:
+  parse_mode: "HTML"
+  disable_web_page_preview: true
+
+# Plugins
+plugins:
+  - name: "horoscope"
+    enabled: true
+    config:
+      # OpenAI API key from environment
+      openai_api_key: "${OPENAI_API_KEY}"
+
+      # Default delivery hour (UTC, 0-23)
+      default_delivery_hour: 8
+
+      # Custom welcome message (optional)
+      # welcome_message: "Custom welcome text here"
+
+  - name: "error_handler"
+    enabled: true
+    config:
+      show_error_id: true
+      notify_admins: false
+
+# Access control
+access:
+  allowed_users: []    # Empty = allow all users
+  blocked_users: []
+  admin_users: []      # Add your user ID for admin commands
+
+# Rate limiting
+rate_limiting:
+  enabled: true
+  default_rate: 30     # 30 requests per minute
+  burst_size: 10
+
+# FSM strategy
+fsm_strategy: "USER_IN_CHAT"

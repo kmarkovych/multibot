@@ -90,6 +90,8 @@ config/bots/*.yaml
 !config/bots/example_bot.yaml
 !config/bots/admin.yaml
 !config/bots/md2pdf_bot.yaml
+!config/bots/horoscope_bot.yaml
 src/plugins/custom/*.py
 !src/plugins/custom/.gitkeep
 !src/plugins/custom/md2pdf.py
+!src/plugins/custom/horoscope/
