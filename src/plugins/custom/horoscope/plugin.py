@@ -63,12 +63,25 @@ class HoroscopePlugin(BasePlugin):
         """Register all command and callback handlers."""
 
         @router.message(CommandStart())
-        async def cmd_start(message: Message) -> None:
+        async def cmd_start(
+            message: Message,
+            token_balance: int = 0,
+            is_new_token_user: bool = False,
+        ) -> None:
             """Welcome message with main menu."""
             lang = message.from_user.language_code if message.from_user else None
             welcome = self.get_config("welcome_message", None) or t("welcome", lang)
+
+            # Add token info to welcome message
+            if is_new_token_user and token_balance > 0:
+                token_info = t("welcome_free_tokens", lang, tokens=token_balance)
+            else:
+                token_info = t("welcome_token_balance", lang, balance=token_balance)
+
+            full_message = f"{welcome.strip()}\n\n{token_info}"
+
             await message.answer(
-                welcome.strip(),
+                full_message,
                 reply_markup=get_main_menu_keyboard(lang),
                 parse_mode="HTML",
             )

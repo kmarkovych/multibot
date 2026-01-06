@@ -112,6 +112,9 @@ Subscribe to receive daily horoscopes!""",
 <b>Tip:</b> Horoscopes are generated using AI and cached daily for each sign.""",
         # Horoscope footer
         "have_wonderful_day": "Have a wonderful day! ✨",
+        # Token welcome messages
+        "welcome_free_tokens": "🎁 You received <b>{tokens} free tokens</b> to get started!\nUse /tokens to check your balance.",
+        "welcome_token_balance": "💰 Your balance: <b>{balance}</b> tokens\nUse /tokens to purchase more.",
         # Billing
         "billing_balance_title": "Your Token Balance",
         "billing_balance": "Balance: <b>{balance}</b> tokens",
@@ -238,6 +241,9 @@ Subscribe to receive daily horoscopes!""",
 <b>Порада:</b> Гороскопи генеруються за допомогою ШІ та кешуються щодня для кожного знаку.""",
         # Horoscope footer
         "have_wonderful_day": "Гарного дня! ✨",
+        # Token welcome messages
+        "welcome_free_tokens": "🎁 Ви отримали <b>{tokens} безкоштовних токенів</b> для початку!\nВикористовуйте /tokens, щоб перевірити баланс.",
+        "welcome_token_balance": "💰 Ваш баланс: <b>{balance}</b> токенів\nВикористовуйте /tokens, щоб придбати більше.",
         # Billing
         "billing_balance_title": "Ваш баланс токенів",
         "billing_balance": "Баланс: <b>{balance}</b> токенів",
@@ -364,6 +370,9 @@ Assine para receber horóscopos diários!""",
 <b>Dica:</b> Os horóscopos são gerados por IA e armazenados diariamente para cada signo.""",
         # Horoscope footer
         "have_wonderful_day": "Tenha um dia maravilhoso! ✨",
+        # Token welcome messages
+        "welcome_free_tokens": "🎁 Você recebeu <b>{tokens} tokens grátis</b> para começar!\nUse /tokens para verificar seu saldo.",
+        "welcome_token_balance": "💰 Seu saldo: <b>{balance}</b> tokens\nUse /tokens para comprar mais.",
         # Billing
         "billing_balance_title": "Seu Saldo de Tokens",
         "billing_balance": "Saldo: <b>{balance}</b> tokens",
@@ -490,6 +499,9 @@ Assine para receber horóscopos diários!""",
 <b>Кеңес:</b> Жұлдызнамалар AI көмегімен жасалады және әр белгі үшін күн сайын сақталады.""",
         # Horoscope footer
         "have_wonderful_day": "Күніңіз жарқын болсын! ✨",
+        # Token welcome messages
+        "welcome_free_tokens": "🎁 Сіз бастау үшін <b>{tokens} тегін токен</b> алдыңыз!\nБалансыңызды тексеру үшін /tokens пайдаланыңыз.",
+        "welcome_token_balance": "💰 Сіздің балансыңыз: <b>{balance}</b> токен\nКөбірек сатып алу үшін /tokens пайдаланыңыз.",
         # Billing
         "billing_balance_title": "Сіздің токен балансыңыз",
         "billing_balance": "Баланс: <b>{balance}</b> токен",
