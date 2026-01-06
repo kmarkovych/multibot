@@ -120,3 +120,6 @@ When `ENABLE_HOT_RELOAD=true`, `ConfigWatcher` (`src/utils/watcher.py`) monitors
 - Type annotations with `from __future__ import annotations`
 - Use TYPE_CHECKING imports for type hints that would cause circular imports
 - Do not mention Claude in commit messages
+- Use venv environment
+- Cover all the functionality with tests
+- Test and lint project befor commit
