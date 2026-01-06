@@ -5,6 +5,8 @@ services:
       dockerfile: docker/Dockerfile
     container_name: multibot
     restart: unless-stopped
+    env_file:
+      - ../.env
     ports:
       - "8080:8080"   # Health checks
       - "8443:8443"   # Webhooks (optional)
@@ -14,12 +16,11 @@ services:
       DATABASE_POOL_SIZE: 10
 
       # Admin bot
-      ADMIN_BOT_TOKEN: ${ADMIN_BOT_TOKEN}
-      ADMIN_ALLOWED_USERS: ${ADMIN_ALLOWED_USERS}
+      ADMIN_BOT_TOKEN: ${ADMIN_BOT_TOKEN:-}
+      ADMIN_ALLOWED_USERS: ${ADMIN_ALLOWED_USERS:-}
 
-      # Other bot tokens (add as needed)
-      # BOT_SUPPORT_TOKEN: ${BOT_SUPPORT_TOKEN}
-      # BOT_NOTIFICATION_TOKEN: ${BOT_NOTIFICATION_TOKEN}
+      # Bot tokens (add as needed)
+      BOT_MD2PDF_TOKEN: ${BOT_MD2PDF_TOKEN:-}
 
       # Health checks
       HEALTH_CHECK_ENABLED: "true"
