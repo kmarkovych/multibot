@@ -127,6 +127,7 @@ class PluginRegistry:
         if self._builtin_loaded:
             return
 
+        from src.admin.plugin import AdminPlugin
         from src.plugins.builtin.error_handler import ErrorHandlerPlugin
         from src.plugins.builtin.help import HelpPlugin
         from src.plugins.builtin.start import StartPlugin
@@ -134,6 +135,7 @@ class PluginRegistry:
         self.register(StartPlugin)
         self.register(HelpPlugin)
         self.register(ErrorHandlerPlugin)
+        self.register(AdminPlugin)
 
         self._builtin_loaded = True
         logger.info(f"Loaded {len(self._plugin_classes)} built-in plugins")

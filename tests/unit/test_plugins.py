@@ -101,6 +101,7 @@ class TestPluginRegistry:
         assert registry.has_plugin("start")
         assert registry.has_plugin("help")
         assert registry.has_plugin("error_handler")
+        assert registry.has_plugin("admin_core")
 
     def test_get_plugin_info(self):
         """Test getting plugin information."""
