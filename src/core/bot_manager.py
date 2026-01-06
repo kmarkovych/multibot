@@ -73,10 +73,12 @@ class BotManager:
         self,
         db: DatabaseManager | None = None,
         dispatcher_factory: DispatcherFactory | None = None,
+        config_manager: Any | None = None,
     ):
         self.bots: dict[str, ManagedBot] = {}
         self.db = db
         self.dispatcher_factory = dispatcher_factory
+        self.config_manager = config_manager
         self._shutdown_event = asyncio.Event()
 
     def set_dispatcher_factory(self, factory: DispatcherFactory) -> None:
@@ -150,6 +152,9 @@ class BotManager:
 
     async def _start_polling(self, managed_bot: ManagedBot) -> None:
         """Start a bot in polling mode."""
+        # References for injection into handlers
+        bot_manager = self
+        config_manager = self.config_manager
 
         async def polling_loop():
             try:
@@ -159,6 +164,8 @@ class BotManager:
                 await managed_bot.dispatcher.start_polling(
                     managed_bot.bot,
                     allowed_updates=managed_bot.dispatcher.resolve_used_update_types(),
+                    bot_manager=bot_manager,
+                    config_manager=config_manager,
                 )
             except asyncio.CancelledError:
                 logger.info(f"Polling cancelled for bot: {managed_bot.bot_id}")

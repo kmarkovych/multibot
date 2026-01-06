@@ -147,6 +147,7 @@ class MultibotApplication:
         self.bot_manager = BotManager(
             db=self.db,
             dispatcher_factory=self.dispatcher_factory,
+            config_manager=self.config_manager,
         )
 
         logger.info("Bot manager initialized")
