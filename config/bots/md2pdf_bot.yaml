@@ -3,7 +3,7 @@
 id: "md2pdf_bot"
 name: "Markdown to PDF Converter"
 description: "Convert Markdown text and files to beautifully formatted PDF documents"
-enabled: true
+enabled: false
 
 # Bot token from environment variable
 token: "${BOT_MD2PDF_TOKEN}"
