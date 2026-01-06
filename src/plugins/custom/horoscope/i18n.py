@@ -58,7 +58,7 @@ Select an option below to get started!""",
         "select_sign_change": "<b>♈ Change Your Zodiac Sign</b>\n\nSelect your new sign:",
         "subscribe_select_sign": "<b>📅 Subscribe to Daily Horoscope</b>\n\nFirst, select your zodiac sign:",
         "select_time": "<b>⏰ Select Delivery Time</b>\n\nSign: {sign}\n\nWhen would you like to receive your daily horoscope? (UTC)",
-        "change_time": "<b>⏰ Change Delivery Time</b>\n\nSelect your preferred time (UTC):",
+        "change_time": "<b>⏰ Change Delivery Time</b>\n\nSign: {sign}\n\nSelect your preferred time (UTC):",
         "subscribed": """<b>✅ Subscribed Successfully!</b>
 
 <b>Sign:</b> {sign}
@@ -157,7 +157,7 @@ Subscribe to receive daily horoscopes!""",
         "select_sign_change": "<b>♈ Змінити знак зодіаку</b>\n\nОберіть новий знак:",
         "subscribe_select_sign": "<b>📅 Підписка на щоденний гороскоп</b>\n\nСпочатку оберіть ваш знак зодіаку:",
         "select_time": "<b>⏰ Оберіть час доставки</b>\n\nЗнак: {sign}\n\nКоли ви бажаєте отримувати щоденний гороскоп? (UTC)",
-        "change_time": "<b>⏰ Змінити час доставки</b>\n\nОберіть бажаний час (UTC):",
+        "change_time": "<b>⏰ Змінити час доставки</b>\n\nЗнак: {sign}\n\nОберіть бажаний час (UTC):",
         "subscribed": """<b>✅ Підписка оформлена!</b>
 
 <b>Знак:</b> {sign}
@@ -256,7 +256,7 @@ Selecione uma opção abaixo para começar!""",
         "select_sign_change": "<b>♈ Mudar Seu Signo</b>\n\nSelecione seu novo signo:",
         "subscribe_select_sign": "<b>📅 Assinar Horóscopo Diário</b>\n\nPrimeiro, selecione seu signo:",
         "select_time": "<b>⏰ Selecione o Horário de Entrega</b>\n\nSigno: {sign}\n\nQuando você gostaria de receber seu horóscopo diário? (UTC)",
-        "change_time": "<b>⏰ Mudar Horário de Entrega</b>\n\nSelecione seu horário preferido (UTC):",
+        "change_time": "<b>⏰ Mudar Horário de Entrega</b>\n\nSigno: {sign}\n\nSelecione seu horário preferido (UTC):",
         "subscribed": """<b>✅ Assinatura Confirmada!</b>
 
 <b>Signo:</b> {sign}
@@ -355,7 +355,7 @@ Assine para receber horóscopos diários!""",
         "select_sign_change": "<b>♈ Зодиак белгіңізді өзгертіңіз</b>\n\nЖаңа белгіңізді таңдаңыз:",
         "subscribe_select_sign": "<b>📅 Күнделікті жұлдызнамаға жазылу</b>\n\nАлдымен зодиак белгіңізді таңдаңыз:",
         "select_time": "<b>⏰ Жеткізу уақытын таңдаңыз</b>\n\nБелгі: {sign}\n\nКүнделікті жұлдызнамаңызды қашан алғыңыз келеді? (UTC)",
-        "change_time": "<b>⏰ Жеткізу уақытын өзгерту</b>\n\nҚалаған уақытты таңдаңыз (UTC):",
+        "change_time": "<b>⏰ Жеткізу уақытын өзгерту</b>\n\nБелгі: {sign}\n\nҚалаған уақытты таңдаңыз (UTC):",
         "subscribed": """<b>✅ Сәтті жазылдыңыз!</b>
 
 <b>Белгі:</b> {sign}

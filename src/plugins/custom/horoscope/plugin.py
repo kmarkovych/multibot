@@ -308,9 +308,20 @@ class HoroscopePlugin(BasePlugin):
         async def cb_settings_time(callback: CallbackQuery) -> None:
             """Change delivery time."""
             lang = callback.from_user.language_code if callback.from_user else None
+
+            if not self._subscriptions:
+                await callback.answer(t("service_not_ready", lang), show_alert=True)
+                return
+
+            # Get existing subscription to show current sign
+            sub = await self._subscriptions.get_subscription(callback.from_user.id)
+            if not sub:
+                await callback.answer(t("no_subscription", lang), show_alert=True)
+                return
+
             await callback.answer()
             await callback.message.edit_text(
-                t("change_time", lang),
+                t("change_time", lang, sign=sub.zodiac_sign.format_display()),
                 reply_markup=get_time_keyboard(lang),
                 parse_mode="HTML",
             )

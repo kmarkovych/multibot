@@ -20,7 +20,7 @@ class TestMd2PdfPluginMetadata:
     def test_plugin_version(self):
         """Test plugin has version."""
         plugin = Md2PdfPlugin()
-        assert plugin.version == "1.0.0"
+        assert plugin.version == "1.1.0"
 
     def test_plugin_description(self):
         """Test plugin has description."""
