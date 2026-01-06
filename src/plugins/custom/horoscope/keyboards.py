@@ -165,6 +165,10 @@ def get_main_menu_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
+                    text=t("btn_my_balance", lang),
+                    callback_data="billing:balance",
+                ),
+                InlineKeyboardButton(
                     text=t("btn_buy_tokens", lang),
                     callback_data="billing:buy_menu",
                 ),

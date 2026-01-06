@@ -253,6 +253,66 @@ class BillingPlugin(BasePlugin):
             lang = self._get_user_lang(message.from_user)
             await self._show_packages(message, lang=lang)
 
+        @router.callback_query(F.data == "billing:balance")
+        async def callback_balance(callback: CallbackQuery) -> None:
+            """Show token balance view."""
+            user = callback.from_user
+            if not user or not callback.message:
+                await callback.answer()
+                return
+
+            lang = self._get_user_lang(user)
+            stats = await self.token_manager.get_stats(user.id)
+            balance = stats["balance"]
+            total_purchased = stats["total_purchased"]
+            total_consumed = stats["total_consumed"]
+
+            # Build keyboard
+            buttons = []
+            packages = self.token_manager.get_all_packages()
+            if packages:
+                buy_text = self._translate(
+                    "billing_buy_tokens", lang, default="Buy Tokens"
+                )
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text=f"🛒 {buy_text}",
+                            callback_data="billing:buy_menu",
+                        )
+                    ]
+                )
+
+            history_text = self._translate("billing_history", lang, default="History")
+            buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"📜 {history_text}",
+                        callback_data="billing:history",
+                    )
+                ]
+            )
+
+            keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+            title = self._translate(
+                "billing_balance_title", lang, default="Your Token Balance"
+            )
+            balance_line = self._translate(
+                "billing_balance", lang, default=f"Balance: <b>{balance}</b> tokens", balance=balance
+            )
+            purchased_line = self._translate(
+                "billing_total_purchased", lang, default=f"Total purchased: {total_purchased}", total=total_purchased
+            )
+            used_line = self._translate(
+                "billing_total_used", lang, default=f"Total used: {total_consumed}", total=total_consumed
+            )
+
+            text = f"💰 <b>{title}</b>\n\n{balance_line}\n{purchased_line}\n{used_line}\n"
+
+            await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+            await callback.answer()
+
         @router.callback_query(F.data == "billing:buy_menu")
         async def callback_buy_menu(callback: CallbackQuery) -> None:
             """Show package selection menu."""
