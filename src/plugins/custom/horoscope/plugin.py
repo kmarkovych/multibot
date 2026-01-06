@@ -12,6 +12,7 @@ from aiogram.types import BotCommand, CallbackQuery, Message
 from src.plugins.base import BasePlugin
 
 from .cache import HoroscopeCache
+from .i18n import SUPPORTED_LANGUAGES, t
 from .keyboards import (
     get_confirm_keyboard,
     get_horoscope_keyboard,
@@ -60,29 +61,20 @@ class HoroscopePlugin(BasePlugin):
         @router.message(CommandStart())
         async def cmd_start(message: Message) -> None:
             """Welcome message with main menu."""
-            welcome = self.get_config("welcome_message", None) or """
-<b>\u2b50 Welcome to Horoscope Bot!</b>
-
-I can provide you with personalized daily horoscopes powered by AI.
-
-<b>Features:</b>
-\u2022 Get your daily horoscope
-\u2022 Subscribe to receive it automatically
-\u2022 Choose your preferred delivery time
-
-Select an option below to get started!
-"""
+            lang = message.from_user.language_code if message.from_user else None
+            welcome = self.get_config("welcome_message", None) or t("welcome", lang)
             await message.answer(
                 welcome.strip(),
-                reply_markup=get_main_menu_keyboard(),
+                reply_markup=get_main_menu_keyboard(lang),
                 parse_mode="HTML",
             )
 
         @router.message(Command("horoscope"))
         async def cmd_horoscope(message: Message) -> None:
             """Get today's horoscope."""
+            lang = message.from_user.language_code if message.from_user else None
             if not self._subscriptions or not self._scheduler:
-                await message.answer("Service not ready. Please try again later.")
+                await message.answer(t("service_not_ready", lang))
                 return
 
             # Check if user has a saved sign
@@ -90,12 +82,11 @@ Select an option below to get started!
 
             if sub:
                 # User has subscription, use their sign
-                await self._send_horoscope(message, sub.zodiac_sign)
+                await self._send_horoscope(message, sub.zodiac_sign, lang)
             else:
                 # Ask user to select sign
                 await message.answer(
-                    "<b>\u2648 Select Your Zodiac Sign</b>\n\n"
-                    "Choose your sign to get today's horoscope:",
+                    t("select_sign", lang),
                     reply_markup=get_zodiac_keyboard(),
                     parse_mode="HTML",
                 )
@@ -103,9 +94,9 @@ Select an option below to get started!
         @router.message(Command("subscribe"))
         async def cmd_subscribe(message: Message) -> None:
             """Subscribe to daily horoscope."""
+            lang = message.from_user.language_code if message.from_user else None
             await message.answer(
-                "<b>\ud83d\udcc5 Subscribe to Daily Horoscope</b>\n\n"
-                "First, select your zodiac sign:",
+                t("subscribe_select_sign", lang),
                 reply_markup=get_zodiac_keyboard(),
                 parse_mode="HTML",
             )
@@ -113,82 +104,63 @@ Select an option below to get started!
         @router.message(Command("unsubscribe"))
         async def cmd_unsubscribe(message: Message) -> None:
             """Unsubscribe from daily horoscope."""
+            lang = message.from_user.language_code if message.from_user else None
             if not self._subscriptions:
                 return
 
             sub = await self._subscriptions.get_subscription(message.from_user.id)
 
             if not sub:
-                await message.answer(
-                    "You don't have an active subscription.",
-                    parse_mode="HTML",
-                )
+                await message.answer(t("no_subscription", lang), parse_mode="HTML")
                 return
 
             await message.answer(
-                f"<b>\u274c Unsubscribe?</b>\n\n"
-                f"You're currently subscribed to receive {sub.zodiac_sign.format_display()} "
-                f"horoscope daily at {sub.delivery_hour:02d}:00 UTC.\n\n"
-                f"Do you want to unsubscribe?",
-                reply_markup=get_confirm_keyboard("unsubscribe"),
+                t(
+                    "unsubscribe_confirm",
+                    lang,
+                    sign=sub.zodiac_sign.format_display(),
+                    hour=f"{sub.delivery_hour:02d}",
+                ),
+                reply_markup=get_confirm_keyboard("unsubscribe", lang),
                 parse_mode="HTML",
             )
 
         @router.message(Command("settings"))
         async def cmd_settings(message: Message) -> None:
             """Show settings menu."""
+            lang = message.from_user.language_code if message.from_user else None
             if not self._subscriptions:
                 return
 
             sub = await self._subscriptions.get_subscription(message.from_user.id)
 
             if sub:
-                text = (
-                    f"<b>\u2699\ufe0f Your Settings</b>\n\n"
-                    f"<b>Sign:</b> {sub.zodiac_sign.format_display()}\n"
-                    f"<b>Delivery:</b> Daily at {sub.delivery_hour:02d}:00 UTC\n"
-                    f"<b>Status:</b> \u2705 Active"
+                text = t(
+                    "settings_with_sub",
+                    lang,
+                    sign=sub.zodiac_sign.format_display(),
+                    hour=f"{sub.delivery_hour:02d}",
                 )
             else:
-                text = (
-                    "<b>\u2699\ufe0f Settings</b>\n\n"
-                    "You don't have an active subscription yet.\n"
-                    "Subscribe to receive daily horoscopes!"
-                )
+                text = t("settings_no_sub", lang)
 
             await message.answer(
                 text,
-                reply_markup=get_settings_keyboard(sub is not None),
+                reply_markup=get_settings_keyboard(sub is not None, lang),
                 parse_mode="HTML",
             )
 
         @router.message(Command("help"))
         async def cmd_help(message: Message) -> None:
             """Show help message."""
-            help_text = """
-<b>\u2753 Horoscope Bot Help</b>
-
-<b>Commands:</b>
-/start - Show main menu
-/horoscope - Get today's horoscope
-/subscribe - Subscribe to daily delivery
-/unsubscribe - Cancel subscription
-/settings - View and change settings
-/help - Show this help
-
-<b>How it works:</b>
-1. Select your zodiac sign
-2. Get your personalized horoscope
-3. Subscribe to receive it daily!
-
-<b>Tip:</b> Horoscopes are generated using AI and cached daily for each sign.
-"""
-            await message.answer(help_text.strip(), parse_mode="HTML")
+            lang = message.from_user.language_code if message.from_user else None
+            await message.answer(t("help", lang), parse_mode="HTML")
 
         # Callback handlers for main menu
         @router.callback_query(F.data == "menu_horoscope")
         async def cb_menu_horoscope(callback: CallbackQuery) -> None:
             """Handle horoscope menu button."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
 
             if not self._subscriptions:
@@ -197,14 +169,11 @@ Select an option below to get started!
             sub = await self._subscriptions.get_subscription(callback.from_user.id)
 
             if sub:
-                await callback.message.edit_text(
-                    "\u23f3 Generating your horoscope...",
-                )
-                await self._send_horoscope_edit(callback.message, sub.zodiac_sign)
+                await callback.message.edit_text(t("generating", lang))
+                await self._send_horoscope_edit(callback.message, sub.zodiac_sign, lang)
             else:
                 await callback.message.edit_text(
-                    "<b>\u2648 Select Your Zodiac Sign</b>\n\n"
-                    "Choose your sign to get today's horoscope:",
+                    t("select_sign", lang),
                     reply_markup=get_zodiac_keyboard(),
                     parse_mode="HTML",
                 )
@@ -212,10 +181,10 @@ Select an option below to get started!
         @router.callback_query(F.data == "menu_subscribe")
         async def cb_menu_subscribe(callback: CallbackQuery) -> None:
             """Handle subscribe menu button."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\ud83d\udcc5 Subscribe to Daily Horoscope</b>\n\n"
-                "First, select your zodiac sign:",
+                t("subscribe_select_sign", lang),
                 reply_markup=get_zodiac_keyboard(),
                 parse_mode="HTML",
             )
@@ -223,6 +192,7 @@ Select an option below to get started!
         @router.callback_query(F.data == "menu_settings")
         async def cb_menu_settings(callback: CallbackQuery) -> None:
             """Handle settings menu button."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
 
             if not self._subscriptions:
@@ -231,22 +201,18 @@ Select an option below to get started!
             sub = await self._subscriptions.get_subscription(callback.from_user.id)
 
             if sub:
-                text = (
-                    f"<b>\u2699\ufe0f Your Settings</b>\n\n"
-                    f"<b>Sign:</b> {sub.zodiac_sign.format_display()}\n"
-                    f"<b>Delivery:</b> Daily at {sub.delivery_hour:02d}:00 UTC\n"
-                    f"<b>Status:</b> \u2705 Active"
+                text = t(
+                    "settings_with_sub",
+                    lang,
+                    sign=sub.zodiac_sign.format_display(),
+                    hour=f"{sub.delivery_hour:02d}",
                 )
             else:
-                text = (
-                    "<b>\u2699\ufe0f Settings</b>\n\n"
-                    "You don't have an active subscription yet.\n"
-                    "Subscribe to receive daily horoscopes!"
-                )
+                text = t("settings_no_sub", lang)
 
             await callback.message.edit_text(
                 text,
-                reply_markup=get_settings_keyboard(sub is not None),
+                reply_markup=get_settings_keyboard(sub is not None, lang),
                 parse_mode="HTML",
             )
 
@@ -254,11 +220,12 @@ Select an option below to get started!
         @router.callback_query(F.data.startswith("zodiac_"))
         async def cb_zodiac_select(callback: CallbackQuery) -> None:
             """Handle zodiac sign selection."""
+            lang = callback.from_user.language_code if callback.from_user else None
             sign_name = callback.data.replace("zodiac_", "")
             sign = ZodiacSign.from_name(sign_name)
 
             if not sign:
-                await callback.answer("Invalid sign", show_alert=True)
+                await callback.answer(t("invalid_sign", lang), show_alert=True)
                 return
 
             await callback.answer()
@@ -266,32 +233,28 @@ Select an option below to get started!
             # Check context - are we subscribing or just getting horoscope?
             msg_text = callback.message.text or ""
 
-            if "Subscribe" in msg_text:
+            if "Subscribe" in msg_text or "Підписка" in msg_text:
                 # User is subscribing - ask for time
-                # Store sign temporarily in callback state
                 await callback.message.edit_text(
-                    f"<b>\u23f0 Select Delivery Time</b>\n\n"
-                    f"Sign: {sign.format_display()}\n\n"
-                    f"When would you like to receive your daily horoscope? (UTC)",
-                    reply_markup=get_time_keyboard(),
+                    t("select_time", lang, sign=sign.format_display()),
+                    reply_markup=get_time_keyboard(lang),
                     parse_mode="HTML",
                 )
-                # Store the sign choice for the time selection
-                # We'll use the message as context
                 callback.message._sign_choice = sign.name  # noqa: SLF001
             else:
                 # Just getting horoscope
-                await callback.message.edit_text("\u23f3 Generating your horoscope...")
-                await self._send_horoscope_edit(callback.message, sign)
+                await callback.message.edit_text(t("generating", lang))
+                await self._send_horoscope_edit(callback.message, sign, lang)
 
         # Time selection for subscription
         @router.callback_query(F.data.startswith("subtime_"))
         async def cb_time_select(callback: CallbackQuery) -> None:
             """Handle delivery time selection."""
+            lang = callback.from_user.language_code if callback.from_user else None
             hour = int(callback.data.replace("subtime_", ""))
 
             if not self._subscriptions:
-                await callback.answer("Service not ready", show_alert=True)
+                await callback.answer(t("service_not_ready", lang), show_alert=True)
                 return
 
             # Get sign from message context (look at the message text)
@@ -304,7 +267,7 @@ Select an option below to get started!
                     break
 
             if not sign:
-                await callback.answer("Please select your sign first", show_alert=True)
+                await callback.answer(t("select_sign_first", lang), show_alert=True)
                 return
 
             await callback.answer()
@@ -317,31 +280,26 @@ Select an option below to get started!
             )
 
             await callback.message.edit_text(
-                f"<b>\u2705 Subscribed Successfully!</b>\n\n"
-                f"<b>Sign:</b> {sign.format_display()}\n"
-                f"<b>Delivery:</b> Daily at {hour:02d}:00 UTC\n\n"
-                f"You'll receive your first horoscope at the scheduled time.\n"
-                f"Use /horoscope to get today's horoscope now!",
-                reply_markup=get_main_menu_keyboard(),
+                t("subscribed", lang, sign=sign.format_display(), hour=f"{hour:02d}"),
+                reply_markup=get_main_menu_keyboard(lang),
                 parse_mode="HTML",
             )
 
         @router.callback_query(F.data == "sub_cancel")
         async def cb_sub_cancel(callback: CallbackQuery) -> None:
             """Cancel subscription flow."""
-            await callback.answer("Cancelled")
-            await callback.message.edit_text(
-                "Subscription cancelled.\n\nUse /start to return to the main menu.",
-            )
+            lang = callback.from_user.language_code if callback.from_user else None
+            await callback.answer(t("cancelled", lang))
+            await callback.message.edit_text(t("sub_cancelled", lang))
 
         # Settings callbacks
         @router.callback_query(F.data == "settings_sign")
         async def cb_settings_sign(callback: CallbackQuery) -> None:
             """Change zodiac sign."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\u2648 Change Your Zodiac Sign</b>\n\n"
-                "Select your new sign:",
+                t("select_sign_change", lang),
                 reply_markup=get_zodiac_keyboard(),
                 parse_mode="HTML",
             )
@@ -349,21 +307,21 @@ Select an option below to get started!
         @router.callback_query(F.data == "settings_time")
         async def cb_settings_time(callback: CallbackQuery) -> None:
             """Change delivery time."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\u23f0 Change Delivery Time</b>\n\n"
-                "Select your preferred time (UTC):",
-                reply_markup=get_time_keyboard(),
+                t("change_time", lang),
+                reply_markup=get_time_keyboard(lang),
                 parse_mode="HTML",
             )
 
         @router.callback_query(F.data == "settings_sub")
         async def cb_settings_sub(callback: CallbackQuery) -> None:
             """Start subscription from settings."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\ud83d\udcc5 Subscribe to Daily Horoscope</b>\n\n"
-                "First, select your zodiac sign:",
+                t("subscribe_select_sign", lang),
                 reply_markup=get_zodiac_keyboard(),
                 parse_mode="HTML",
             )
@@ -371,22 +329,22 @@ Select an option below to get started!
         @router.callback_query(F.data == "settings_unsub")
         async def cb_settings_unsub(callback: CallbackQuery) -> None:
             """Unsubscribe from settings."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\u274c Unsubscribe?</b>\n\n"
-                "Are you sure you want to cancel your daily horoscope?",
-                reply_markup=get_confirm_keyboard("unsubscribe"),
+                t("unsubscribe_confirm", lang, sign="", hour=""),
+                reply_markup=get_confirm_keyboard("unsubscribe", lang),
                 parse_mode="HTML",
             )
 
         @router.callback_query(F.data == "settings_back")
         async def cb_settings_back(callback: CallbackQuery) -> None:
             """Back to main menu from settings."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\u2b50 Horoscope Bot</b>\n\n"
-                "Select an option:",
-                reply_markup=get_main_menu_keyboard(),
+                t("main_menu", lang),
+                reply_markup=get_main_menu_keyboard(lang),
                 parse_mode="HTML",
             )
 
@@ -394,6 +352,7 @@ Select an option below to get started!
         @router.callback_query(F.data == "confirm_unsubscribe")
         async def cb_confirm_unsub(callback: CallbackQuery) -> None:
             """Confirm unsubscribe."""
+            lang = callback.from_user.language_code if callback.from_user else None
             if not self._subscriptions:
                 return
 
@@ -401,25 +360,24 @@ Select an option below to get started!
             await self._subscriptions.unsubscribe(callback.from_user.id)
 
             await callback.message.edit_text(
-                "<b>\u2705 Unsubscribed</b>\n\n"
-                "You've been unsubscribed from daily horoscopes.\n"
-                "You can still use /horoscope to get your horoscope anytime!",
-                reply_markup=get_main_menu_keyboard(),
+                t("unsubscribed", lang),
+                reply_markup=get_main_menu_keyboard(lang),
                 parse_mode="HTML",
             )
 
         @router.callback_query(F.data == "confirm_cancel")
         async def cb_confirm_cancel(callback: CallbackQuery) -> None:
             """Cancel confirmation."""
-            await callback.answer("Cancelled")
+            lang = callback.from_user.language_code if callback.from_user else None
+            await callback.answer(t("cancelled", lang))
 
             if not self._subscriptions:
                 return
 
             sub = await self._subscriptions.get_subscription(callback.from_user.id)
             await callback.message.edit_text(
-                "<b>\u2699\ufe0f Settings</b>\n\nAction cancelled.",
-                reply_markup=get_settings_keyboard(sub is not None),
+                t("settings_cancelled", lang),
+                reply_markup=get_settings_keyboard(sub is not None, lang),
                 parse_mode="HTML",
             )
 
@@ -427,10 +385,10 @@ Select an option below to get started!
         @router.callback_query(F.data == "horoscope_other")
         async def cb_horoscope_other(callback: CallbackQuery) -> None:
             """Select another zodiac sign."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\u2648 Select Zodiac Sign</b>\n\n"
-                "Choose a sign to get today's horoscope:",
+                t("select_sign", lang),
                 reply_markup=get_zodiac_keyboard(),
                 parse_mode="HTML",
             )
@@ -438,49 +396,53 @@ Select an option below to get started!
         @router.callback_query(F.data == "horoscope_menu")
         async def cb_horoscope_menu(callback: CallbackQuery) -> None:
             """Back to main menu."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await callback.answer()
             await callback.message.edit_text(
-                "<b>\u2b50 Horoscope Bot</b>\n\n"
-                "Select an option:",
-                reply_markup=get_main_menu_keyboard(),
+                t("main_menu", lang),
+                reply_markup=get_main_menu_keyboard(lang),
                 parse_mode="HTML",
             )
 
-    async def _send_horoscope(self, message: Message, sign: ZodiacSign) -> None:
+    async def _send_horoscope(
+        self, message: Message, sign: ZodiacSign, lang: str | None = None
+    ) -> None:
         """Send horoscope as a new message."""
         if not self._scheduler:
-            await message.answer("Service not ready. Please try again later.")
+            await message.answer(t("service_not_ready", lang))
             return
 
         try:
-            processing = await message.answer("\u23f3 Generating your horoscope...")
+            processing = await message.answer(t("generating", lang))
 
             horoscope_msg = await self._scheduler.deliver_now(
-                message.from_user.id, sign
+                message.from_user.id, sign, lang
             )
 
             await processing.delete()
             await message.answer(
                 horoscope_msg,
                 parse_mode="HTML",
-                reply_markup=get_horoscope_keyboard(),
+                reply_markup=get_horoscope_keyboard(lang),
             )
 
         except HoroscopeGenerationError as e:
             await message.answer(f"\u274c {e}")
 
-    async def _send_horoscope_edit(self, message: Message, sign: ZodiacSign) -> None:
+    async def _send_horoscope_edit(
+        self, message: Message, sign: ZodiacSign, lang: str | None = None
+    ) -> None:
         """Send horoscope by editing existing message."""
         if not self._scheduler:
-            await message.edit_text("Service not ready. Please try again later.")
+            await message.edit_text(t("service_not_ready", lang))
             return
 
         try:
-            horoscope_msg = await self._scheduler.deliver_now(0, sign)
+            horoscope_msg = await self._scheduler.deliver_now(0, sign, lang)
             await message.edit_text(
                 horoscope_msg,
                 parse_mode="HTML",
-                reply_markup=get_horoscope_keyboard(),
+                reply_markup=get_horoscope_keyboard(lang),
             )
 
         except HoroscopeGenerationError as e:
@@ -510,16 +472,28 @@ Select an option below to get started!
         # Start scheduler
         await self._scheduler.start()
 
-        # Set bot commands menu
-        commands = [
-            BotCommand(command="start", description="Main menu"),
-            BotCommand(command="horoscope", description="Get today's horoscope"),
-            BotCommand(command="subscribe", description="Subscribe to daily delivery"),
-            BotCommand(command="unsubscribe", description="Cancel subscription"),
-            BotCommand(command="settings", description="View settings"),
-            BotCommand(command="help", description="Show help"),
+        # Set bot commands for each supported language
+        for lang in SUPPORTED_LANGUAGES:
+            commands = [
+                BotCommand(command="start", description=t("cmd_start", lang)),
+                BotCommand(command="horoscope", description=t("cmd_horoscope", lang)),
+                BotCommand(command="subscribe", description=t("cmd_subscribe", lang)),
+                BotCommand(command="unsubscribe", description=t("cmd_unsubscribe", lang)),
+                BotCommand(command="settings", description=t("cmd_settings", lang)),
+                BotCommand(command="help", description=t("cmd_help", lang)),
+            ]
+            await bot.set_my_commands(commands, language_code=lang)
+
+        # Set default commands (English) for users without language preference
+        default_commands = [
+            BotCommand(command="start", description=t("cmd_start", "en")),
+            BotCommand(command="horoscope", description=t("cmd_horoscope", "en")),
+            BotCommand(command="subscribe", description=t("cmd_subscribe", "en")),
+            BotCommand(command="unsubscribe", description=t("cmd_unsubscribe", "en")),
+            BotCommand(command="settings", description=t("cmd_settings", "en")),
+            BotCommand(command="help", description=t("cmd_help", "en")),
         ]
-        await bot.set_my_commands(commands)
+        await bot.set_my_commands(default_commands)
 
         logger.info("Horoscope plugin loaded and scheduler started")
 

@@ -11,6 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from .cache import HoroscopeCache
+from .i18n import t
 from .openai_client import HoroscopeGenerationError, OpenAIClient
 from .subscription import Subscription, SubscriptionManager
 from .zodiac import ZodiacSign
@@ -21,12 +22,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def format_horoscope_message(sign: ZodiacSign, horoscope: str, target_date: date) -> str:
+def format_horoscope_message(
+    sign: ZodiacSign, horoscope: str, target_date: date, lang: str | None = None
+) -> str:
     """Format horoscope for Telegram message."""
     return (
         f"{sign.emoji} <b>{sign.value} - {target_date.strftime('%B %d, %Y')}</b>\n\n"
         f"{horoscope}\n\n"
-        f"<i>Have a wonderful day!</i> \u2728"
+        f"<i>{t('have_wonderful_day', lang)}</i>"
     )
 
 
@@ -157,17 +160,20 @@ class HoroscopeScheduler:
         except Exception as e:
             logger.error(f"Error in cache cleanup: {e}")
 
-    async def deliver_now(self, telegram_id: int, sign: ZodiacSign) -> str:
+    async def deliver_now(
+        self, telegram_id: int, sign: ZodiacSign, lang: str | None = None
+    ) -> str:
         """
         Generate and deliver horoscope immediately (for /horoscope command).
 
         Args:
             telegram_id: User's Telegram ID
             sign: Zodiac sign
+            lang: User's language code
 
         Returns:
             Formatted horoscope message
         """
         today = date.today()
         horoscope = await self._get_or_generate_horoscope(sign, today)
-        return format_horoscope_message(sign, horoscope, today)
+        return format_horoscope_message(sign, horoscope, today, lang)

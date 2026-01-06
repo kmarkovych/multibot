@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from .i18n import t
 from .zodiac import ZodiacSign
 
 
@@ -25,7 +26,7 @@ def get_zodiac_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def get_time_keyboard() -> InlineKeyboardMarkup:
+def get_time_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
     """Create keyboard for selecting delivery time (UTC hours)."""
     times = [
         ("06:00", 6),
@@ -48,18 +49,18 @@ def get_time_keyboard() -> InlineKeyboardMarkup:
         rows.append(row)
 
     rows.append([
-        InlineKeyboardButton(text="\u274c Cancel", callback_data="sub_cancel"),
+        InlineKeyboardButton(text=t("btn_cancel", lang), callback_data="sub_cancel"),
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def get_settings_keyboard(has_subscription: bool) -> InlineKeyboardMarkup:
+def get_settings_keyboard(has_subscription: bool, lang: str | None = None) -> InlineKeyboardMarkup:
     """Create settings menu keyboard."""
     buttons = [
         [
             InlineKeyboardButton(
-                text="\u2648 Change Sign",
+                text=t("btn_change_sign", lang),
                 callback_data="settings_sign",
             ),
         ],
@@ -68,42 +69,42 @@ def get_settings_keyboard(has_subscription: bool) -> InlineKeyboardMarkup:
     if has_subscription:
         buttons.append([
             InlineKeyboardButton(
-                text="\u23f0 Change Time",
+                text=t("btn_change_time", lang),
                 callback_data="settings_time",
             ),
         ])
         buttons.append([
             InlineKeyboardButton(
-                text="\u274c Unsubscribe",
+                text=t("btn_unsubscribe", lang),
                 callback_data="settings_unsub",
             ),
         ])
     else:
         buttons.append([
             InlineKeyboardButton(
-                text="\u2705 Subscribe",
+                text=t("btn_subscribe_now", lang),
                 callback_data="settings_sub",
             ),
         ])
 
     buttons.append([
-        InlineKeyboardButton(text="\u00ab Back", callback_data="settings_back"),
+        InlineKeyboardButton(text=t("btn_back", lang), callback_data="settings_back"),
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_confirm_keyboard(action: str) -> InlineKeyboardMarkup:
+def get_confirm_keyboard(action: str, lang: str | None = None) -> InlineKeyboardMarkup:
     """Create confirmation keyboard."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="\u2705 Confirm",
+                    text=t("btn_confirm", lang),
                     callback_data=f"confirm_{action}",
                 ),
                 InlineKeyboardButton(
-                    text="\u274c Cancel",
+                    text=t("btn_cancel", lang),
                     callback_data="confirm_cancel",
                 ),
             ],
@@ -111,23 +112,23 @@ def get_confirm_keyboard(action: str) -> InlineKeyboardMarkup:
     )
 
 
-def get_main_menu_keyboard() -> InlineKeyboardMarkup:
+def get_main_menu_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
     """Create main menu keyboard."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="\u2b50 Get Horoscope",
+                    text=t("btn_get_horoscope", lang),
                     callback_data="menu_horoscope",
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text="\ud83d\udcc5 Subscribe",
+                    text=t("btn_subscribe", lang),
                     callback_data="menu_subscribe",
                 ),
                 InlineKeyboardButton(
-                    text="\u2699\ufe0f Settings",
+                    text=t("btn_settings", lang),
                     callback_data="menu_settings",
                 ),
             ],
@@ -135,17 +136,17 @@ def get_main_menu_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def get_horoscope_keyboard() -> InlineKeyboardMarkup:
+def get_horoscope_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
     """Create keyboard shown after horoscope display."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="\u2648 Other Sign",
+                    text=t("btn_other_sign", lang),
                     callback_data="horoscope_other",
                 ),
                 InlineKeyboardButton(
-                    text="\u00ab Menu",
+                    text=t("btn_menu", lang),
                     callback_data="horoscope_menu",
                 ),
             ],
