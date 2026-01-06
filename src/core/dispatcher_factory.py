@@ -41,8 +41,11 @@ class DispatcherFactory:
         self,
         config: BotConfig,
         bot_id: str,
-    ) -> Dispatcher:
+        bot: "Bot | None" = None,
+    ) -> tuple[Dispatcher, list[BasePlugin]]:
         """Create a fully configured Dispatcher for a bot."""
+        from aiogram import Bot
+
         # Create FSM storage
         # In production, you might want Redis storage
         storage = MemoryStorage()
@@ -54,7 +57,7 @@ class DispatcherFactory:
         main_router = Router(name=f"main_{bot_id}")
 
         # Load and attach plugins
-        await self._attach_plugins(main_router, config, bot_id)
+        plugins = await self._attach_plugins(main_router, config, bot_id, bot)
 
         # Include main router in dispatcher
         dispatcher.include_router(main_router)
@@ -63,15 +66,18 @@ class DispatcherFactory:
         self._setup_middleware(dispatcher, config, bot_id)
 
         logger.info(f"Created dispatcher for bot: {bot_id}")
-        return dispatcher
+        return dispatcher, plugins
 
     async def _attach_plugins(
         self,
         router: Router,
         config: BotConfig,
         bot_id: str,
-    ) -> None:
+        bot: "Bot | None" = None,
+    ) -> list[BasePlugin]:
         """Load and attach plugins to the router."""
+        from aiogram import Bot
+
         if not config.plugins:
             # Use default plugins if none specified
             config.plugins = [
@@ -120,7 +126,17 @@ class DispatcherFactory:
             except Exception as e:
                 logger.error(f"Failed to load plugin {plugin_name} for bot {bot_id}: {e}")
 
+        # Call on_load for each plugin if bot is provided
+        if bot:
+            for plugin in loaded_plugins:
+                try:
+                    await plugin.on_load(bot)
+                    logger.debug(f"Called on_load for plugin {plugin.name}")
+                except Exception as e:
+                    logger.error(f"Error in on_load for plugin {plugin.name}: {e}")
+
         logger.info(f"Loaded {len(loaded_plugins)} plugins for bot {bot_id}")
+        return loaded_plugins
 
     def _setup_middleware(
         self,

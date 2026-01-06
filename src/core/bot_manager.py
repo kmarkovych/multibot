@@ -22,6 +22,7 @@ from src.core.exceptions import (
 if TYPE_CHECKING:
     from src.core.dispatcher_factory import DispatcherFactory
     from src.database.connection import DatabaseManager
+    from src.plugins.base import BasePlugin
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class ManagedBot:
     error_message: str | None = None
     polling_task: asyncio.Task | None = field(default=None, repr=False)
     message_count: int = 0
+    plugins: list["BasePlugin"] = field(default_factory=list, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -100,10 +102,11 @@ class BotManager:
             ),
         )
 
-        # Create Dispatcher with plugins
-        dispatcher = await self.dispatcher_factory.create_dispatcher(
+        # Create Dispatcher with plugins (pass bot so on_load is called)
+        dispatcher, plugins = await self.dispatcher_factory.create_dispatcher(
             config=config,
             bot_id=config.id,
+            bot=bot,
         )
 
         managed_bot = ManagedBot(
@@ -113,6 +116,7 @@ class BotManager:
             dispatcher=dispatcher,
             mode=config.mode,
             state="stopped",
+            plugins=plugins,
         )
 
         self.bots[config.id] = managed_bot
@@ -199,6 +203,13 @@ class BotManager:
                     await managed_bot.polling_task
                 except asyncio.CancelledError:
                     pass
+
+            # Call on_unload for all plugins
+            for plugin in managed_bot.plugins:
+                try:
+                    await plugin.on_unload(managed_bot.bot)
+                except Exception as e:
+                    logger.error(f"Error in on_unload for plugin {plugin.name}: {e}")
 
             # Close bot session
             await managed_bot.bot.session.close()
