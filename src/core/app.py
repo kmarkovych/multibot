@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from src.admin.notifier import AdminNotifier
 from src.core.bot_manager import BotManager
 from src.core.config import AppConfig, ConfigManager
 from src.core.dispatcher_factory import DispatcherFactory
@@ -51,6 +52,9 @@ class MultibotApplication:
 
         # Hot reload
         self.config_watcher: ConfigWatcher | None = None
+
+        # Admin notifications
+        self.admin_notifier: AdminNotifier | None = None
 
         # Signal handling
         self.signal_handler = SignalHandler()
@@ -177,7 +181,27 @@ class MultibotApplication:
 
         logger.info(f"Found {len(bot_configs)} bot configurations")
 
+        # Start admin bot first so we can send notifications
+        admin_bot_id = "admin"
+        if admin_bot_id in bot_configs:
+            admin_config = bot_configs[admin_bot_id]
+            try:
+                await self.bot_manager.create_bot(admin_config)
+                if admin_config.enabled:
+                    await self.bot_manager.start_bot(admin_bot_id)
+                    # Initialize admin notifier
+                    self.admin_notifier = AdminNotifier(self.bot_manager, admin_bot_id)
+                    logger.info("Admin notifier initialized")
+            except Exception as e:
+                logger.error(f"Failed to start admin bot: {e}")
+
+        # Start other bots
+        startup_errors: list[tuple[str, str]] = []
+
         for bot_id, bot_config in bot_configs.items():
+            if bot_id == admin_bot_id:
+                continue  # Already started
+
             try:
                 # Create bot
                 await self.bot_manager.create_bot(bot_config)
@@ -187,7 +211,14 @@ class MultibotApplication:
                     await self.bot_manager.start_bot(bot_id)
 
             except Exception as e:
-                logger.error(f"Failed to start bot {bot_id}: {e}")
+                error_msg = str(e)
+                logger.error(f"Failed to start bot {bot_id}: {error_msg}")
+                startup_errors.append((bot_id, error_msg))
+
+        # Send notifications for startup errors
+        if self.admin_notifier and startup_errors:
+            for bot_id, error_msg in startup_errors:
+                await self.admin_notifier.notify_bot_error(bot_id, error_msg)
 
         running = len(self.bot_manager.get_running_bots())
         logger.info(f"Started {running} bots")
@@ -252,7 +283,10 @@ class MultibotApplication:
             logger.info(f"Bot {bot_id} reloaded successfully")
 
         except Exception as e:
-            logger.error(f"Failed to reload bot {bot_id}: {e}")
+            error_msg = str(e)
+            logger.error(f"Failed to reload bot {bot_id}: {error_msg}")
+            if self.admin_notifier:
+                await self.admin_notifier.notify_bot_error(bot_id, f"Reload failed: {error_msg}")
 
     async def _on_plugin_change(self, plugin_name: str, plugin_path: Path) -> None:
         """Handle plugin file changes."""
@@ -298,6 +332,11 @@ class MultibotApplication:
                     if bot_config.enabled:
                         await self.bot_manager.start_bot(bot_id)
             except Exception as e:
-                logger.error(f"Failed to reload bot {bot_id}: {e}")
+                error_msg = str(e)
+                logger.error(f"Failed to reload bot {bot_id}: {error_msg}")
+                if self.admin_notifier:
+                    await self.admin_notifier.notify_bot_error(
+                        bot_id, f"Reload failed: {error_msg}"
+                    )
 
         logger.info("All configurations reloaded")
