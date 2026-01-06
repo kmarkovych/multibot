@@ -14,6 +14,7 @@ from src.plugins.base import BasePlugin
 from .cache import HoroscopeCache
 from .keyboards import (
     get_confirm_keyboard,
+    get_horoscope_keyboard,
     get_main_menu_keyboard,
     get_settings_keyboard,
     get_time_keyboard,
@@ -422,6 +423,29 @@ Select an option below to get started!
                 parse_mode="HTML",
             )
 
+        # Horoscope result callbacks
+        @router.callback_query(F.data == "horoscope_other")
+        async def cb_horoscope_other(callback: CallbackQuery) -> None:
+            """Select another zodiac sign."""
+            await callback.answer()
+            await callback.message.edit_text(
+                "<b>\u2648 Select Zodiac Sign</b>\n\n"
+                "Choose a sign to get today's horoscope:",
+                reply_markup=get_zodiac_keyboard(),
+                parse_mode="HTML",
+            )
+
+        @router.callback_query(F.data == "horoscope_menu")
+        async def cb_horoscope_menu(callback: CallbackQuery) -> None:
+            """Back to main menu."""
+            await callback.answer()
+            await callback.message.edit_text(
+                "<b>\u2b50 Horoscope Bot</b>\n\n"
+                "Select an option:",
+                reply_markup=get_main_menu_keyboard(),
+                parse_mode="HTML",
+            )
+
     async def _send_horoscope(self, message: Message, sign: ZodiacSign) -> None:
         """Send horoscope as a new message."""
         if not self._scheduler:
@@ -436,7 +460,11 @@ Select an option below to get started!
             )
 
             await processing.delete()
-            await message.answer(horoscope_msg, parse_mode="HTML")
+            await message.answer(
+                horoscope_msg,
+                parse_mode="HTML",
+                reply_markup=get_horoscope_keyboard(),
+            )
 
         except HoroscopeGenerationError as e:
             await message.answer(f"\u274c {e}")
@@ -449,7 +477,11 @@ Select an option below to get started!
 
         try:
             horoscope_msg = await self._scheduler.deliver_now(0, sign)
-            await message.edit_text(horoscope_msg, parse_mode="HTML")
+            await message.edit_text(
+                horoscope_msg,
+                parse_mode="HTML",
+                reply_markup=get_horoscope_keyboard(),
+            )
 
         except HoroscopeGenerationError as e:
             await message.edit_text(f"\u274c {e}")

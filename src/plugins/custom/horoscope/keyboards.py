@@ -133,3 +133,21 @@ def get_main_menu_keyboard() -> InlineKeyboardMarkup:
             ],
         ]
     )
+
+
+def get_horoscope_keyboard() -> InlineKeyboardMarkup:
+    """Create keyboard shown after horoscope display."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="\u2648 Other Sign",
+                    callback_data="horoscope_other",
+                ),
+                InlineKeyboardButton(
+                    text="\u00ab Menu",
+                    callback_data="horoscope_menu",
+                ),
+            ],
+        ]
+    )
