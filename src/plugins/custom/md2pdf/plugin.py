@@ -12,6 +12,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (
+    BotCommand,
     BufferedInputFile,
     CallbackQuery,
     InlineKeyboardButton,
@@ -20,6 +21,8 @@ from aiogram.types import (
 )
 
 from src.plugins.base import BasePlugin
+
+from .i18n import SUPPORTED_LANGUAGES, get_theme_name, t
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +44,12 @@ class Md2PdfPlugin(BasePlugin):
     - Customizable styles
     - Multiple themes (light/dark)
     - Auto-combine split messages (handles Telegram's 4096 char limit)
+    - Multilanguage support (en, uk, pt, kk)
     """
 
     name = "md2pdf"
     description = "Convert Markdown to PDF"
-    version = "1.0.0"
+    version = "1.1.0"
     author = "Multibot System"
 
     # Buffer delay in seconds - wait for more messages before processing
@@ -194,74 +198,36 @@ class Md2PdfPlugin(BasePlugin):
         @router.message(CommandStart())
         async def cmd_start(message: Message) -> None:
             """Handle /start command."""
-            welcome = self.get_config("welcome_message", None) or """
-<b>📄 Markdown to PDF Converter</b>
-
-Welcome! I can convert your Markdown text or files to beautifully formatted PDF documents.
-
-<b>How to use:</b>
-• Send me any Markdown text
-• Send me a <code>.md</code> file
-• Use /convert to start a conversion
-
-<b>Commands:</b>
-/convert - Start markdown conversion
-/help - Show detailed help
-/themes - View available themes
-
-<b>Quick tip:</b> Just paste your Markdown text and I'll convert it!
-"""
+            lang = message.from_user.language_code if message.from_user else None
+            welcome = self.get_config("welcome_message", None) or t("welcome", lang)
             await message.answer(welcome.strip(), parse_mode="HTML")
 
         @router.message(Command("help"))
         async def cmd_help(message: Message) -> None:
             """Show help message."""
-            help_text = """
-<b>📖 Markdown to PDF Help</b>
-
-<b>Supported Markdown features:</b>
-• Headers (# H1, ## H2, ### H3)
-• Bold, italic, strikethrough
-• Code blocks and inline code
-• Lists (ordered and unordered)
-• Links and images
-• Tables
-• Blockquotes
-• Horizontal rules
-
-<b>Commands:</b>
-/convert - Interactive conversion mode
-/themes - Choose PDF theme
-/help - This help message
-
-<b>Examples:</b>
-<code># My Document
-This is **bold** and *italic*.
-
-## Code Example
-```python
-print("Hello, World!")
-```
-
-| Column 1 | Column 2 |
-|----------|----------|
-| Data 1   | Data 2   |
-</code>
-"""
-            await message.answer(help_text.strip(), parse_mode="HTML")
+            lang = message.from_user.language_code if message.from_user else None
+            await message.answer(t("help", lang), parse_mode="HTML")
 
         @router.message(Command("themes"))
         async def cmd_themes(message: Message) -> None:
             """Show theme options."""
-            keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="☀️ Light Theme", callback_data="theme_light"),
-                    InlineKeyboardButton(text="🌙 Dark Theme", callback_data="theme_dark"),
-                ],
-            ])
+            lang = message.from_user.language_code if message.from_user else None
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=f"\u2600\ufe0f {t('btn_theme_light', lang)}",
+                            callback_data="theme_light",
+                        ),
+                        InlineKeyboardButton(
+                            text=f"\U0001f319 {t('btn_theme_dark', lang)}",
+                            callback_data="theme_dark",
+                        ),
+                    ],
+                ]
+            )
             await message.answer(
-                "<b>🎨 Choose PDF Theme</b>\n\n"
-                "Select a theme for your PDF documents:",
+                t("themes_title", lang),
                 reply_markup=keyboard,
                 parse_mode="HTML",
             )
@@ -269,30 +235,35 @@ print("Hello, World!")
         @router.callback_query(F.data.startswith("theme_"))
         async def handle_theme(callback: CallbackQuery, state: FSMContext) -> None:
             """Handle theme selection."""
+            lang = callback.from_user.language_code if callback.from_user else None
             theme = callback.data.split("_")[1]
             await state.update_data(theme=theme)
-            await callback.answer(f"Theme set to {theme}!")
+            theme_name = get_theme_name(theme, lang)
+            await callback.answer(f"{theme_name}!")
             await callback.message.edit_text(
-                f"✅ Theme set to <b>{theme}</b>\n\n"
-                "Now send me your Markdown text or file!",
+                t("theme_set", lang, theme=theme_name),
                 parse_mode="HTML",
             )
 
         @router.message(Command("convert"))
         async def cmd_convert(message: Message, state: FSMContext) -> None:
             """Start interactive conversion."""
+            lang = message.from_user.language_code if message.from_user else None
             await state.set_state(ConvertStates.waiting_for_markdown)
 
-            keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_convert")],
-            ])
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=f"\u274c {t('btn_cancel', lang)}",
+                            callback_data="cancel_convert",
+                        )
+                    ],
+                ]
+            )
 
             await message.answer(
-                "<b>📝 Markdown Conversion</b>\n\n"
-                "Send me your Markdown content:\n"
-                "• Paste text directly\n"
-                "• Send a <code>.md</code> file\n\n"
-                "<i>Tip: You can also just send markdown anytime without using /convert</i>",
+                t("convert_prompt", lang),
                 reply_markup=keyboard,
                 parse_mode="HTML",
             )
@@ -300,25 +271,27 @@ print("Hello, World!")
         @router.callback_query(F.data == "cancel_convert")
         async def cancel_convert(callback: CallbackQuery, state: FSMContext) -> None:
             """Cancel conversion."""
+            lang = callback.from_user.language_code if callback.from_user else None
             await state.clear()
-            await callback.answer("Cancelled")
-            await callback.message.edit_text("❌ Conversion cancelled.")
+            await callback.answer()
+            await callback.message.edit_text(f"\u274c {t('cancelled', lang)}")
 
         @router.message(F.document)
         async def handle_document(message: Message, state: FSMContext, bot: Bot) -> None:
             """Handle uploaded .md files."""
+            lang = message.from_user.language_code if message.from_user else None
             doc = message.document
 
             # Check file extension
-            if not doc.file_name or not doc.file_name.endswith(('.md', '.markdown', '.txt')):
-                await message.answer(
-                    "⚠️ Please send a Markdown file (.md, .markdown, or .txt)"
-                )
+            if not doc.file_name or not doc.file_name.endswith(
+                (".md", ".markdown", ".txt")
+            ):
+                await message.answer(f"\u26a0\ufe0f {t('invalid_file_type', lang)}")
                 return
 
             # Check file size (max 1MB)
             if doc.file_size > 1024 * 1024:
-                await message.answer("⚠️ File too large. Maximum size is 1MB.")
+                await message.answer(f"\u26a0\ufe0f {t('file_too_large', lang)}")
                 return
 
             # Download file
@@ -326,16 +299,16 @@ print("Hello, World!")
             file_bytes = await bot.download_file(file.file_path)
 
             try:
-                markdown_text = file_bytes.read().decode('utf-8')
+                markdown_text = file_bytes.read().decode("utf-8")
             except UnicodeDecodeError:
-                await message.answer("⚠️ Could not read file. Please ensure it's UTF-8 encoded.")
+                await message.answer(f"\u26a0\ufe0f {t('file_read_error', lang)}")
                 return
 
             # Get filename without extension
             filename = Path(doc.file_name).stem
 
             # Convert to PDF
-            await self._convert_and_send(message, state, markdown_text, filename)
+            await self._convert_and_send(message, state, markdown_text, filename, lang)
 
         @router.message(F.text & ~F.text.startswith("/"))
         async def handle_text(message: Message, state: FSMContext) -> None:
@@ -348,7 +321,7 @@ print("Hello, World!")
                 return
 
             # Check if it looks like markdown (has some markdown syntax)
-            markdown_indicators = ['#', '*', '_', '`', '[', '|', '-', '>']
+            markdown_indicators = ["#", "*", "_", "`", "[", "|", "-", ">"]
             if not any(indicator in markdown_text for indicator in markdown_indicators):
                 # If in conversion state, convert anyway
                 current_state = await state.get_state()
@@ -382,6 +355,8 @@ print("Hello, World!")
         state: FSMContext,
     ) -> None:
         """Process all buffered messages for a chat as a single PDF."""
+        lang = message.from_user.language_code if message.from_user else None
+
         # Get and clear the buffer
         messages = self._message_buffers.pop(chat_id, [])
         self._buffer_tasks.pop(chat_id, None)
@@ -395,18 +370,20 @@ print("Hello, World!")
         # Notify if multiple messages were combined
         if len(messages) > 1:
             await message.answer(
-                f"📎 <b>Combined {len(messages)} messages</b> into a single document.",
+                f"\U0001f4ce {t('combined_messages', lang, count=len(messages))}",
                 parse_mode="HTML",
             )
 
         # Generate filename from first line or use default
-        first_line = markdown_text.split('\n')[0]
-        filename = first_line.strip('#').strip()[:50] or "document"
+        first_line = markdown_text.split("\n")[0]
+        filename = first_line.strip("#").strip()[:50] or "document"
         # Clean filename
-        filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_')).strip()
+        filename = "".join(
+            c for c in filename if c.isalnum() or c in (" ", "-", "_")
+        ).strip()
         filename = filename or "document"
 
-        await self._convert_and_send(message, state, markdown_text, filename)
+        await self._convert_and_send(message, state, markdown_text, filename, lang)
 
     async def _convert_and_send(
         self,
@@ -414,10 +391,11 @@ print("Hello, World!")
         state: FSMContext,
         markdown_text: str,
         filename: str,
+        lang: str | None = None,
     ) -> None:
         """Convert markdown to PDF and send it."""
         # Send processing message
-        processing_msg = await message.answer("⏳ Converting to PDF...")
+        processing_msg = await message.answer(f"\u23f3 {t('converting', lang)}")
 
         try:
             # Get theme preference
@@ -438,11 +416,10 @@ print("Hello, World!")
                     filename=f"{filename}.pdf",
                 )
 
+                theme_name = get_theme_name(theme, lang)
                 await message.answer_document(
                     pdf_file,
-                    caption=f"✅ <b>{filename}.pdf</b>\n\n"
-                            f"📊 Size: {len(pdf_bytes) / 1024:.1f} KB\n"
-                            f"🎨 Theme: {theme.title()}",
+                    caption=f"\u2705 {t('conversion_success', lang, filename=f'{filename}.pdf', size=len(pdf_bytes) / 1024, theme=theme_name)}",
                     parse_mode="HTML",
                 )
 
@@ -454,13 +431,13 @@ print("Hello, World!")
 
             else:
                 await processing_msg.edit_text(
-                    "❌ Failed to generate PDF. Please try again."
+                    f"\u274c {t('conversion_failed', lang)}"
                 )
 
         except Exception as e:
             logger.error(f"Error converting markdown to PDF: {e}")
             await processing_msg.edit_text(
-                f"❌ Error during conversion: {str(e)[:100]}"
+                f"\u274c {t('conversion_error', lang, error=str(e)[:100])}"
             )
 
     async def _markdown_to_html(self, markdown_text: str, css: str) -> str:
@@ -470,6 +447,7 @@ print("Hello, World!")
         except ImportError:
             # Fallback to basic conversion
             import html
+
             escaped = html.escape(markdown_text)
             return f"""
             <!DOCTYPE html>
@@ -481,18 +459,18 @@ print("Hello, World!")
 
         # Configure markdown extensions
         extensions = [
-            'tables',
-            'fenced_code',
-            'codehilite',
-            'toc',
-            'nl2br',
-            'sane_lists',
+            "tables",
+            "fenced_code",
+            "codehilite",
+            "toc",
+            "nl2br",
+            "sane_lists",
         ]
 
         extension_configs = {
-            'codehilite': {
-                'css_class': 'highlight',
-                'guess_lang': True,
+            "codehilite": {
+                "css_class": "highlight",
+                "guess_lang": True,
             },
         }
 
@@ -528,6 +506,7 @@ print("Hello, World!")
         # Option 1: WeasyPrint (best quality)
         try:
             from weasyprint import HTML
+
             pdf_bytes = await asyncio.to_thread(
                 lambda: HTML(string=html_content).write_pdf()
             )
@@ -540,15 +519,20 @@ print("Hello, World!")
         # Option 2: pdfkit (requires wkhtmltopdf)
         try:
             import pdfkit
+
             pdf_bytes = await asyncio.to_thread(
-                lambda: pdfkit.from_string(html_content, False, options={
-                    'encoding': 'UTF-8',
-                    'page-size': 'A4',
-                    'margin-top': '20mm',
-                    'margin-bottom': '20mm',
-                    'margin-left': '20mm',
-                    'margin-right': '20mm',
-                })
+                lambda: pdfkit.from_string(
+                    html_content,
+                    False,
+                    options={
+                        "encoding": "UTF-8",
+                        "page-size": "A4",
+                        "margin-top": "20mm",
+                        "margin-bottom": "20mm",
+                        "margin-left": "20mm",
+                        "margin-right": "20mm",
+                    },
+                )
             )
             return pdf_bytes
         except ImportError:
@@ -559,10 +543,9 @@ print("Hello, World!")
         # Option 3: xhtml2pdf (pure Python, basic)
         try:
             from xhtml2pdf import pisa
+
             output = BytesIO()
-            await asyncio.to_thread(
-                lambda: pisa.CreatePDF(html_content, dest=output)
-            )
+            await asyncio.to_thread(lambda: pisa.CreatePDF(html_content, dest=output))
             return output.getvalue()
         except ImportError:
             pass
@@ -591,29 +574,63 @@ print("Hello, World!")
         doc = SimpleDocTemplate(
             output,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm,
+            rightMargin=2 * cm,
+            leftMargin=2 * cm,
+            topMargin=2 * cm,
+            bottomMargin=2 * cm,
         )
 
         styles = getSampleStyleSheet()
         story = []
 
         # Simple HTML to text extraction
-        text = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.DOTALL)
-        text = re.sub(r'<[^>]+>', '\n', text)
-        text = re.sub(r'\n+', '\n', text).strip()
+        text = re.sub(r"<style[^>]*>.*?</style>", "", html_content, flags=re.DOTALL)
+        text = re.sub(r"<[^>]+>", "\n", text)
+        text = re.sub(r"\n+", "\n", text).strip()
 
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             if line.strip():
-                story.append(Paragraph(line, styles['Normal']))
+                story.append(Paragraph(line, styles["Normal"]))
                 story.append(Spacer(1, 6))
 
         await asyncio.to_thread(doc.build, story)
 
         return output.getvalue()
 
+    async def on_load(self, bot: Bot) -> None:
+        """Initialize plugin when loaded."""
+        # Set bot commands, description, and short description for each language
+        for lang in SUPPORTED_LANGUAGES:
+            commands = [
+                BotCommand(command="start", description=t("cmd_start", lang)),
+                BotCommand(command="convert", description=t("cmd_convert", lang)),
+                BotCommand(command="themes", description=t("cmd_themes", lang)),
+                BotCommand(command="help", description=t("cmd_help", lang)),
+            ]
+            await bot.set_my_commands(commands, language_code=lang)
+            await bot.set_my_description(t("bot_description", lang), language_code=lang)
+            await bot.set_my_short_description(
+                t("bot_short_description", lang), language_code=lang
+            )
 
-# Export for auto-discovery
-plugin = Md2PdfPlugin
+        # Set defaults (English) for users without language preference
+        default_commands = [
+            BotCommand(command="start", description=t("cmd_start", "en")),
+            BotCommand(command="convert", description=t("cmd_convert", "en")),
+            BotCommand(command="themes", description=t("cmd_themes", "en")),
+            BotCommand(command="help", description=t("cmd_help", "en")),
+        ]
+        await bot.set_my_commands(default_commands)
+        await bot.set_my_description(t("bot_description", "en"))
+        await bot.set_my_short_description(t("bot_short_description", "en"))
+
+        logger.info("Md2Pdf plugin loaded with multilanguage support")
+
+    async def on_unload(self, bot: Bot) -> None:
+        """Cleanup when plugin is unloaded."""
+        # Clear bot commands, description, and short description
+        await bot.delete_my_commands()
+        await bot.set_my_description("")
+        await bot.set_my_short_description("")
+
+        logger.info("Md2Pdf plugin unloaded")
