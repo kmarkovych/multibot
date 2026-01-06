@@ -49,7 +49,7 @@ class OpenAIClient:
         """
         client = await self._get_client()
 
-        prompt = f"""Generate a daily horoscope for {sign.value} ({sign.emoji}) for {target_date.strftime('%B %d, %Y')}.
+        prompt = f"""Generate a daily horoscope for {sign.value} for {target_date.strftime('%B %d, %Y')}.
 
 Include insights about:
 - Love & Relationships
@@ -62,7 +62,12 @@ Guidelines:
 - Be specific but not too personal
 - Around 100-150 words total
 - Use a warm, friendly tone
-- Format with clear sections"""
+
+Format using HTML tags for Telegram:
+- Use <b>Section Name:</b> for section headers
+- Use plain text for content
+- End with <b>Lucky Numbers:</b> followed by the numbers
+- Do NOT use markdown formatting like ** or __"""
 
         try:
             response = await client.chat.completions.create(
@@ -71,7 +76,8 @@ Guidelines:
                     {
                         "role": "system",
                         "content": "You are a mystical astrologer providing daily horoscopes. "
-                        "Your predictions are uplifting, insightful, and entertaining.",
+                        "Your predictions are uplifting, insightful, and entertaining. "
+                        "Always format output using HTML tags (like <b> for bold), never markdown.",
                     },
                     {"role": "user", "content": prompt},
                 ],
