@@ -48,6 +48,9 @@ class AdminPlugin(BasePlugin):
                 ],
                 [
                     InlineKeyboardButton(text="🔄 Reload All", callback_data="admin_reload_all"),
+                    InlineKeyboardButton(text="💰 Tokens", callback_data="admin_tokens"),
+                ],
+                [
                     InlineKeyboardButton(text="❓ Help", callback_data="admin_help"),
                 ],
             ]
@@ -293,6 +296,33 @@ Select an option below or use /help to see all commands.
                 parse_mode="HTML",
             )
 
+        @router.callback_query(F.data == "admin_tokens")
+        async def cb_tokens_menu(callback: CallbackQuery) -> None:
+            """Show token management menu."""
+            await callback.answer()
+            help_text = """
+<b>💰 Token Management</b>
+
+Manage user token balances across bots.
+
+<b>Grant Tokens:</b>
+<code>/grant_tokens &lt;bot_id&gt; &lt;user_id&gt; &lt;amount&gt; [reason]</code>
+
+<b>Check Balance:</b>
+<code>/user_balance &lt;bot_id&gt; &lt;user_id&gt;</code>
+
+<b>Examples:</b>
+<code>/grant_tokens horoscope_bot 123456 50 Bonus</code>
+<code>/user_balance horoscope_bot 123456</code>
+"""
+            await callback.message.edit_text(
+                help_text.strip(),
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="« Back", callback_data="admin_menu")],
+                ]),
+                parse_mode="HTML",
+            )
+
         @router.callback_query(F.data.startswith("bot_select_"))
         async def cb_bot_select(callback: CallbackQuery, bot_manager: BotManager) -> None:
             """Select a bot to manage."""
@@ -478,6 +508,111 @@ Select an action:
             except Exception as e:
                 await callback.answer(f"Error: {e}", show_alert=True)
 
+        @router.message(Command("grant_tokens"))
+        async def cmd_grant_tokens(message: Message) -> None:
+            """Grant tokens to a user for a specific bot."""
+            args = message.text.split()[1:] if message.text else []
+
+            if len(args) < 3:
+                await message.answer(
+                    "<b>Usage:</b> /grant_tokens &lt;bot_id&gt; &lt;user_id&gt; &lt;amount&gt; [reason]\n\n"
+                    "<b>Example:</b>\n"
+                    "<code>/grant_tokens my_horoscopes_bot 123456789 50 Welcome bonus</code>",
+                    parse_mode="HTML",
+                )
+                return
+
+            bot_id = args[0]
+            try:
+                user_id = int(args[1])
+                amount = int(args[2])
+            except ValueError:
+                await message.answer("❌ User ID and amount must be numbers.")
+                return
+
+            if amount <= 0:
+                await message.answer("❌ Amount must be positive.")
+                return
+
+            reason = " ".join(args[3:]) if len(args) > 3 else "Admin grant"
+
+            try:
+                from src.billing.token_manager import TokenManager
+
+                # Create token manager for the target bot
+                token_manager = TokenManager(
+                    db=self.db,
+                    bot_id=bot_id,
+                    free_tokens=0,
+                )
+
+                new_balance = await token_manager.grant(
+                    telegram_id=user_id,
+                    amount=amount,
+                    reason=reason,
+                )
+
+                await message.answer(
+                    f"✅ <b>Tokens Granted</b>\n\n"
+                    f"<b>Bot:</b> <code>{bot_id}</code>\n"
+                    f"<b>User:</b> <code>{user_id}</code>\n"
+                    f"<b>Amount:</b> +{amount} tokens\n"
+                    f"<b>New Balance:</b> {new_balance} tokens\n"
+                    f"<b>Reason:</b> {reason}",
+                    parse_mode="HTML",
+                )
+
+            except Exception as e:
+                await message.answer(f"❌ Error granting tokens: {e}")
+
+        @router.message(Command("user_balance"))
+        async def cmd_user_balance(message: Message) -> None:
+            """Check a user's token balance for a specific bot."""
+            args = message.text.split()[1:] if message.text else []
+
+            if len(args) < 2:
+                await message.answer(
+                    "<b>Usage:</b> /user_balance &lt;bot_id&gt; &lt;user_id&gt;\n\n"
+                    "<b>Example:</b>\n"
+                    "<code>/user_balance my_horoscopes_bot 123456789</code>",
+                    parse_mode="HTML",
+                )
+                return
+
+            bot_id = args[0]
+            try:
+                user_id = int(args[1])
+            except ValueError:
+                await message.answer("❌ User ID must be a number.")
+                return
+
+            try:
+                from src.billing.token_manager import TokenManager
+
+                token_manager = TokenManager(
+                    db=self.db,
+                    bot_id=bot_id,
+                    free_tokens=0,
+                )
+
+                stats = await token_manager.get_stats(user_id)
+                balance = stats["balance"]
+                total_purchased = stats["total_purchased"]
+                total_consumed = stats["total_consumed"]
+
+                await message.answer(
+                    f"💰 <b>User Balance</b>\n\n"
+                    f"<b>Bot:</b> <code>{bot_id}</code>\n"
+                    f"<b>User:</b> <code>{user_id}</code>\n"
+                    f"<b>Balance:</b> {balance} tokens\n"
+                    f"<b>Total Purchased:</b> {total_purchased}\n"
+                    f"<b>Total Used:</b> {total_consumed}",
+                    parse_mode="HTML",
+                )
+
+            except Exception as e:
+                await message.answer(f"❌ Error: {e}")
+
         @router.message(Command("help"))
         async def admin_help(message: Message) -> None:
             help_text = """
@@ -499,6 +634,10 @@ Select an action:
 <b>Configuration:</b>
 /reload &lt;bot_id&gt; - Reload bot config
 /reload_all - Reload all configs
+
+<b>Token Management:</b>
+/grant_tokens &lt;bot_id&gt; &lt;user_id&gt; &lt;amount&gt; [reason] - Grant tokens
+/user_balance &lt;bot_id&gt; &lt;user_id&gt; - Check user balance
 
 <b>Navigation:</b>
 /menu - Show main menu with buttons
