@@ -428,7 +428,6 @@ class HoroscopePlugin(BasePlugin):
                 await callback.answer()
 
                 # Create subscription with timezone and language
-                lang = callback.from_user.language_code if callback.from_user else None
                 await self._subscriptions.subscribe(
                     telegram_id=callback.from_user.id,
                     sign=sign,
