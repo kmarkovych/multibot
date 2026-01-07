@@ -32,6 +32,7 @@ class Subscription:
     delivery_hour: int  # Local hour (0-23)
     timezone: str  # Timezone ID (e.g., "Europe/Kyiv")
     is_active: bool
+    language: str | None = None  # User's language code for horoscope delivery
     created_at: datetime | None = None
 
 
@@ -52,6 +53,7 @@ class SubscriptionManager:
         sign: ZodiacSign,
         delivery_hour: int = 8,
         timezone: str = DEFAULT_TIMEZONE,
+        language: str | None = None,
     ) -> Subscription:
         """
         Create or update a subscription.
@@ -61,6 +63,7 @@ class SubscriptionManager:
             sign: User's zodiac sign
             delivery_hour: Hour to deliver horoscope (local time, 0-23)
             timezone: User's timezone ID
+            language: User's language code for horoscope delivery
 
         Returns:
             The created/updated subscription
@@ -78,6 +81,7 @@ class SubscriptionManager:
                     "sign": sign.name,
                     "hour": delivery_hour,
                     "timezone": timezone,
+                    "language": language,
                     "active": True,
                     "created_at": datetime.utcnow().isoformat(),
                 },
@@ -85,7 +89,7 @@ class SubscriptionManager:
             await session.commit()
 
         logger.info(
-            f"User {telegram_id} subscribed: {sign.value} at {delivery_hour}:00 {timezone}"
+            f"User {telegram_id} subscribed: {sign.value} at {delivery_hour}:00 {timezone} ({language})"
         )
 
         return Subscription(
@@ -94,6 +98,7 @@ class SubscriptionManager:
             delivery_hour=delivery_hour,
             timezone=timezone,
             is_active=True,
+            language=language,
             created_at=datetime.utcnow(),
         )
 
@@ -149,6 +154,7 @@ class SubscriptionManager:
                 delivery_hour=state.get("hour", 8),
                 timezone=state.get("timezone", DEFAULT_TIMEZONE),
                 is_active=state.get("active", True),
+                language=state.get("language"),
                 created_at=datetime.fromisoformat(state["created_at"])
                 if "created_at" in state
                 else None,
@@ -307,6 +313,7 @@ class SubscriptionManager:
                         delivery_hour=local_hour,
                         timezone=timezone,
                         is_active=True,
+                        language=data.get("language"),
                         created_at=datetime.fromisoformat(data["created_at"])
                         if "created_at" in data
                         else None,
@@ -350,6 +357,7 @@ class SubscriptionManager:
                         delivery_hour=data.get("hour", 8),
                         timezone=data.get("timezone", DEFAULT_TIMEZONE),
                         is_active=True,
+                        language=data.get("language"),
                         created_at=datetime.fromisoformat(data["created_at"])
                         if "created_at" in data
                         else None,

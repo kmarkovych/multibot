@@ -110,8 +110,12 @@ class HoroscopeScheduler:
         today = date.today()
 
         try:
-            horoscope = await self._get_or_generate_horoscope(sub.zodiac_sign, today)
-            message = format_horoscope_message(sub.zodiac_sign, horoscope, today)
+            horoscope = await self._get_or_generate_horoscope(
+                sub.zodiac_sign, today, sub.language
+            )
+            message = format_horoscope_message(
+                sub.zodiac_sign, horoscope, today, sub.language
+            )
 
             await self.bot.send_message(
                 chat_id=sub.telegram_id,
