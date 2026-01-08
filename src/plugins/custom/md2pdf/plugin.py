@@ -56,11 +56,12 @@ class Md2PdfPlugin(BasePlugin):
     # Buffer delay in seconds - wait for more messages before processing
     BUFFER_DELAY = 1.5
 
-    # Font size configurations: (body_pt, code_pt)
+    # Font size configurations: (body_pt, code_pt, scale_factor)
+    # scale_factor applies to margins, paddings, and spacing
     FONT_SIZES = {
-        "small": (10, 8),
-        "medium": (12, 10),
-        "large": (14, 12),
+        "small": (10, 8, 0.85),
+        "medium": (12, 10, 1.0),
+        "large": (14, 12, 1.2),
     }
 
     def __init__(self, config: dict | None = None):
@@ -497,8 +498,8 @@ class Md2PdfPlugin(BasePlugin):
             )
 
     def _apply_font_size(self, css: str, fontsize: str) -> str:
-        """Apply font size to CSS."""
-        body_pt, code_pt = self.FONT_SIZES.get(fontsize, self.FONT_SIZES["medium"])
+        """Apply font size and scale margins/paddings accordingly."""
+        body_pt, code_pt, scale = self.FONT_SIZES.get(fontsize, self.FONT_SIZES["medium"])
 
         # Replace body font-size
         css = re.sub(
@@ -513,6 +514,41 @@ class Md2PdfPlugin(BasePlugin):
             f"\\g<1>{code_pt}pt",
             css,
         )
+
+        # Scale numeric values in margins and paddings
+        def scale_value(match: re.Match) -> str:
+            prop = match.group(1)  # margin/padding property
+            values = match.group(2)  # the values
+
+            def scale_single(m: re.Match) -> str:
+                num = float(m.group(1))
+                unit = m.group(2)
+                scaled = num * scale
+                # Format nicely: no decimals for whole numbers
+                if scaled == int(scaled):
+                    return f"{int(scaled)}{unit}"
+                return f"{scaled:.1f}{unit}"
+
+            scaled_values = re.sub(r"(\d+\.?\d*)(px|pt|cm|mm|em)", scale_single, values)
+            return f"{prop}{scaled_values}"
+
+        # Scale margin and padding values
+        css = re.sub(
+            r"((?:margin|padding)(?:-(?:top|bottom|left|right))?:\s*)([^;]+)",
+            scale_value,
+            css,
+        )
+
+        # Scale line-height if numeric
+        def scale_line_height(match: re.Match) -> str:
+            value = float(match.group(1))
+            # Scale line-height slightly (less aggressive than margins)
+            scaled = 1.4 + (value - 1.4) * scale
+            # Format nicely: remove trailing zeros
+            formatted = f"{scaled:.2f}".rstrip("0").rstrip(".")
+            return f"line-height: {formatted}"
+
+        css = re.sub(r"line-height:\s*(\d+\.?\d*)", scale_line_height, css)
 
         return css
 
