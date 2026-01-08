@@ -539,6 +539,30 @@ class Md2PdfPlugin(BasePlugin):
             css,
         )
 
+        # Scale border-radius values
+        css = re.sub(
+            r"(border-radius:\s*)([^;]+)",
+            scale_value,
+            css,
+        )
+
+        # Scale border widths (e.g., "border: 1px solid", "border-left: 4px solid")
+        def scale_border(match: re.Match) -> str:
+            prop = match.group(1)
+            width = float(match.group(2))
+            unit = match.group(3)
+            style = match.group(4)
+            scaled = width * scale
+            if scaled == int(scaled):
+                return f"{prop}{int(scaled)}{unit} {style}"
+            return f"{prop}{scaled:.1f}{unit} {style}"
+
+        css = re.sub(
+            r"(border(?:-(?:top|bottom|left|right))?:\s*)(\d+\.?\d*)(px|pt)\s+(solid|dashed|dotted)",
+            scale_border,
+            css,
+        )
+
         # Scale line-height if numeric
         def scale_line_height(match: re.Match) -> str:
             value = float(match.group(1))
