@@ -27,6 +27,7 @@ Just send your markdown and get a PDF back!""",
         "cmd_start": "Main menu",
         "cmd_convert": "Start conversion",
         "cmd_themes": "Choose PDF theme",
+        "cmd_fontsize": "Choose font size",
         "cmd_help": "Show help",
         # Welcome
         "welcome": """<b>Markdown to PDF Converter</b>
@@ -80,6 +81,12 @@ print("Hello, World!")
         "btn_theme_light": "Light Theme",
         "btn_theme_dark": "Dark Theme",
         "theme_set": "Theme set to <b>{theme}</b>\n\nNow send me your Markdown text or file!",
+        # Font Size
+        "fontsize_title": "<b>Choose Font Size</b>\n\nSelect a font size for your PDF documents:",
+        "btn_fontsize_small": "Small",
+        "btn_fontsize_medium": "Medium",
+        "btn_fontsize_large": "Large",
+        "fontsize_set": "Font size set to <b>{size}</b>\n\nNow send me your Markdown text or file!",
         # Convert
         "convert_prompt": """<b>Markdown Conversion</b>
 
@@ -118,6 +125,7 @@ Send me your Markdown content:
         "cmd_start": "Головне меню",
         "cmd_convert": "Почати конвертацію",
         "cmd_themes": "Обрати тему PDF",
+        "cmd_fontsize": "Обрати розмір шрифту",
         "cmd_help": "Показати довідку",
         # Welcome
         "welcome": """<b>Конвертер Markdown у PDF</b>
@@ -171,6 +179,12 @@ print("Привіт, Світе!")
         "btn_theme_light": "Світла тема",
         "btn_theme_dark": "Темна тема",
         "theme_set": "Тему встановлено: <b>{theme}</b>\n\nТепер надішліть мені ваш Markdown текст або файл!",
+        # Font Size
+        "fontsize_title": "<b>Оберіть розмір шрифту</b>\n\nОберіть розмір шрифту для ваших PDF документів:",
+        "btn_fontsize_small": "Малий",
+        "btn_fontsize_medium": "Середній",
+        "btn_fontsize_large": "Великий",
+        "fontsize_set": "Розмір шрифту встановлено: <b>{size}</b>\n\nТепер надішліть мені ваш Markdown текст або файл!",
         # Convert
         "convert_prompt": """<b>Конвертація Markdown</b>
 
@@ -209,6 +223,7 @@ Basta enviar seu markdown e receber um PDF!""",
         "cmd_start": "Menu principal",
         "cmd_convert": "Iniciar conversao",
         "cmd_themes": "Escolher tema do PDF",
+        "cmd_fontsize": "Escolher tamanho da fonte",
         "cmd_help": "Mostrar ajuda",
         # Welcome
         "welcome": """<b>Conversor de Markdown para PDF</b>
@@ -262,6 +277,12 @@ print("Ola, Mundo!")
         "btn_theme_light": "Tema Claro",
         "btn_theme_dark": "Tema Escuro",
         "theme_set": "Tema definido para <b>{theme}</b>\n\nAgora envie-me seu texto ou arquivo Markdown!",
+        # Font Size
+        "fontsize_title": "<b>Escolha o Tamanho da Fonte</b>\n\nSelecione um tamanho de fonte para seus documentos PDF:",
+        "btn_fontsize_small": "Pequeno",
+        "btn_fontsize_medium": "Medio",
+        "btn_fontsize_large": "Grande",
+        "fontsize_set": "Tamanho da fonte definido para <b>{size}</b>\n\nAgora envie-me seu texto ou arquivo Markdown!",
         # Convert
         "convert_prompt": """<b>Conversao de Markdown</b>
 
@@ -300,6 +321,7 @@ Markdown жіберіңіз және PDF алыңыз!""",
         "cmd_start": "Басты мәзір",
         "cmd_convert": "Түрлендіруді бастау",
         "cmd_themes": "PDF тақырыбын таңдау",
+        "cmd_fontsize": "Қаріп өлшемін таңдау",
         "cmd_help": "Анықтаманы көрсету",
         # Welcome
         "welcome": """<b>Markdown-тан PDF-ке түрлендіргіш</b>
@@ -353,6 +375,12 @@ print("Сәлем, Әлем!")
         "btn_theme_light": "Ашық тақырып",
         "btn_theme_dark": "Қараңғы тақырып",
         "theme_set": "Тақырып орнатылды: <b>{theme}</b>\n\nЕнді маған Markdown мәтінін немесе файлды жіберіңіз!",
+        # Font Size
+        "fontsize_title": "<b>Қаріп өлшемін таңдаңыз</b>\n\nPDF құжаттарыңыз үшін қаріп өлшемін таңдаңыз:",
+        "btn_fontsize_small": "Кіші",
+        "btn_fontsize_medium": "Орташа",
+        "btn_fontsize_large": "Үлкен",
+        "fontsize_set": "Қаріп өлшемі орнатылды: <b>{size}</b>\n\nЕнді маған Markdown мәтінін немесе файлды жіберіңіз!",
         # Convert
         "convert_prompt": """<b>Markdown түрлендіру</b>
 
@@ -384,6 +412,14 @@ THEME_NAMES: dict[str, dict[str, str]] = {
     "kk": {"light": "Ашық", "dark": "Қараңғы"},
 }
 
+# Font size name translations
+FONT_SIZE_NAMES: dict[str, dict[str, str]] = {
+    "en": {"small": "Small", "medium": "Medium", "large": "Large"},
+    "uk": {"small": "Малий", "medium": "Середній", "large": "Великий"},
+    "pt": {"small": "Pequeno", "medium": "Medio", "large": "Grande"},
+    "kk": {"small": "Кіші", "medium": "Орташа", "large": "Үлкен"},
+}
+
 
 def get_lang(language_code: str | None) -> str:
     """Get supported language code or default."""
@@ -408,3 +444,9 @@ def get_theme_name(theme: str, language_code: str | None = None) -> str:
     """Get translated theme name."""
     lang = get_lang(language_code)
     return THEME_NAMES.get(lang, THEME_NAMES["en"]).get(theme, theme.title())
+
+
+def get_font_size_name(size: str, language_code: str | None = None) -> str:
+    """Get translated font size name."""
+    lang = get_lang(language_code)
+    return FONT_SIZE_NAMES.get(lang, FONT_SIZE_NAMES["en"]).get(size, size.title())

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from io import BytesIO
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from aiogram.types import (
 
 from src.plugins.base import BasePlugin
 
-from .i18n import SUPPORTED_LANGUAGES, get_theme_name, t
+from .i18n import SUPPORTED_LANGUAGES, get_font_size_name, get_theme_name, t
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,13 @@ class Md2PdfPlugin(BasePlugin):
 
     # Buffer delay in seconds - wait for more messages before processing
     BUFFER_DELAY = 1.5
+
+    # Font size configurations: (body_pt, code_pt)
+    FONT_SIZES = {
+        "small": (10, 8),
+        "medium": (12, 10),
+        "large": (14, 12),
+    }
 
     def __init__(self, config: dict | None = None):
         super().__init__(config)
@@ -245,6 +253,47 @@ class Md2PdfPlugin(BasePlugin):
                 parse_mode="HTML",
             )
 
+        @router.message(Command("fontsize"))
+        async def cmd_fontsize(message: Message) -> None:
+            """Show font size options."""
+            lang = message.from_user.language_code if message.from_user else None
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=f"\U0001f170 {t('btn_fontsize_small', lang)}",
+                            callback_data="fontsize_small",
+                        ),
+                        InlineKeyboardButton(
+                            text=f"\U0001f171 {t('btn_fontsize_medium', lang)}",
+                            callback_data="fontsize_medium",
+                        ),
+                        InlineKeyboardButton(
+                            text=f"\U0001f172 {t('btn_fontsize_large', lang)}",
+                            callback_data="fontsize_large",
+                        ),
+                    ],
+                ]
+            )
+            await message.answer(
+                t("fontsize_title", lang),
+                reply_markup=keyboard,
+                parse_mode="HTML",
+            )
+
+        @router.callback_query(F.data.startswith("fontsize_"))
+        async def handle_fontsize(callback: CallbackQuery, state: FSMContext) -> None:
+            """Handle font size selection."""
+            lang = callback.from_user.language_code if callback.from_user else None
+            size = callback.data.split("_")[1]
+            await state.update_data(fontsize=size)
+            size_name = get_font_size_name(size, lang)
+            await callback.answer(f"{size_name}!")
+            await callback.message.edit_text(
+                t("fontsize_set", lang, size=size_name),
+                parse_mode="HTML",
+            )
+
         @router.message(Command("convert"))
         async def cmd_convert(message: Message, state: FSMContext) -> None:
             """Start interactive conversion."""
@@ -398,10 +447,16 @@ class Md2PdfPlugin(BasePlugin):
         processing_msg = await message.answer(f"\u23f3 {t('converting', lang)}")
 
         try:
-            # Get theme preference
+            # Get theme and font size preferences
             data = await state.get_data()
             theme = data.get("theme", "light")
-            css = self.DARK_CSS if theme == "dark" else self.DEFAULT_CSS
+            fontsize = data.get("fontsize", "medium")
+
+            # Get base CSS for theme
+            base_css = self.DARK_CSS if theme == "dark" else self.DEFAULT_CSS
+
+            # Apply font size to CSS
+            css = self._apply_font_size(base_css, fontsize)
 
             # Convert markdown to HTML
             html_content = await self._markdown_to_html(markdown_text, css)
@@ -417,9 +472,10 @@ class Md2PdfPlugin(BasePlugin):
                 )
 
                 theme_name = get_theme_name(theme, lang)
+                fontsize_name = get_font_size_name(fontsize, lang)
                 await message.answer_document(
                     pdf_file,
-                    caption=f"\u2705 {t('conversion_success', lang, filename=f'{filename}.pdf', size=len(pdf_bytes) / 1024, theme=theme_name)}",
+                    caption=f"\u2705 {t('conversion_success', lang, filename=f'{filename}.pdf', size=len(pdf_bytes) / 1024, theme=theme_name)} | {fontsize_name}",
                     parse_mode="HTML",
                 )
 
@@ -439,6 +495,26 @@ class Md2PdfPlugin(BasePlugin):
             await processing_msg.edit_text(
                 f"\u274c {t('conversion_error', lang, error=str(e)[:100])}"
             )
+
+    def _apply_font_size(self, css: str, fontsize: str) -> str:
+        """Apply font size to CSS."""
+        body_pt, code_pt = self.FONT_SIZES.get(fontsize, self.FONT_SIZES["medium"])
+
+        # Replace body font-size
+        css = re.sub(
+            r"(body\s*\{[^}]*font-size:\s*)\d+pt",
+            f"\\g<1>{body_pt}pt",
+            css,
+        )
+
+        # Replace code font-size
+        css = re.sub(
+            r"(code\s*\{[^}]*font-size:\s*)\d+pt",
+            f"\\g<1>{code_pt}pt",
+            css,
+        )
+
+        return css
 
     async def _markdown_to_html(self, markdown_text: str, css: str) -> str:
         """Convert markdown to HTML with styling."""
@@ -605,6 +681,7 @@ class Md2PdfPlugin(BasePlugin):
                 BotCommand(command="start", description=t("cmd_start", lang)),
                 BotCommand(command="convert", description=t("cmd_convert", lang)),
                 BotCommand(command="themes", description=t("cmd_themes", lang)),
+                BotCommand(command="fontsize", description=t("cmd_fontsize", lang)),
                 BotCommand(command="help", description=t("cmd_help", lang)),
             ]
             await bot.set_my_name(t("bot_name", lang), language_code=lang)
@@ -619,6 +696,7 @@ class Md2PdfPlugin(BasePlugin):
             BotCommand(command="start", description=t("cmd_start", "en")),
             BotCommand(command="convert", description=t("cmd_convert", "en")),
             BotCommand(command="themes", description=t("cmd_themes", "en")),
+            BotCommand(command="fontsize", description=t("cmd_fontsize", "en")),
             BotCommand(command="help", description=t("cmd_help", "en")),
         ]
         await bot.set_my_name(t("bot_name", "en"))
